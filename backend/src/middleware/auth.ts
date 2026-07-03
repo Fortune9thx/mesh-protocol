@@ -1,19 +1,34 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import { query } from "../db/schema.js";
 
+type AuthedRequest = FastifyRequest & { wallet: string };
+
 // Lightweight wallet-based auth: require X-Wallet-Address header on mutating routes
 export async function walletAuth(request: FastifyRequest, reply: FastifyReply) {
   const wallet = request.headers["x-wallet-address"] as string | undefined;
   if (!wallet || wallet.length < 10) {
     return reply.status(401).send({ error: "Missing or invalid X-Wallet-Address header" });
   }
-  (request as FastifyRequest & { wallet: string }).wallet = wallet;
+  (request as AuthedRequest).wallet = wallet;
 }
 
-// Operator-only middleware — checks wallet is an agent owner or known operator
+// Operator-only: wallet must own at least one registered agent
 export async function operatorAuth(request: FastifyRequest, reply: FastifyReply) {
-  await walletAuth(request, reply);
-  // In production: verify against a whitelist or on-chain role
+  const wallet = request.headers["x-wallet-address"] as string | undefined;
+  if (!wallet || wallet.length < 10) {
+    return reply.status(401).send({ error: "Missing or invalid X-Wallet-Address header" });
+  }
+
+  const { rows } = await query(
+    "SELECT 1 FROM agents WHERE owner_wallet = $1 AND status != 'deactivated' LIMIT 1",
+    [wallet]
+  );
+
+  if (rows.length === 0) {
+    return reply.status(403).send({ error: "Forbidden: wallet is not a registered agent owner" });
+  }
+
+  (request as AuthedRequest).wallet = wallet;
 }
 
 export async function auditLog(
