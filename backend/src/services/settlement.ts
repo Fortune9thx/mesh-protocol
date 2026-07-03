@@ -99,3 +99,8 @@ export async function getEscrow(intentId: string): Promise<Escrow | null> {
   );
   return (rows[0] as Escrow) ?? null;
 }
+
+export async function getEscrowById(escrowId: string): Promise<Escrow | null> {
+  const { rows } = await query("SELECT * FROM escrows WHERE escrow_id = $1", [escrowId]);
+  return (rows[0] as Escrow) ?? null;
+}

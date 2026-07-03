@@ -1,7 +1,8 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { query } from "../db/schema.js";
-import { overrideSettlement } from "../services/settlement.js";
+import { overrideSettlement, getEscrowById } from "../services/settlement.js";
 import { EscrowVault } from "../genlayer/client.js";
+import { operatorAuth } from "../middleware/auth.js";
 import type { EscrowStatus } from "../types/index.js";
 
 // SSE client registry
@@ -75,34 +76,44 @@ export async function analyticsRoutes(app: FastifyInstance) {
     return reply.send(rows);
   });
 
-  app.post("/admin/override-settlement", async (req, reply) => {
-    const { escrow_id, new_status, actor } = req.body as {
-      escrow_id: string; new_status: string; actor: string;
-    };
+  // Restricted to the escrow's own payer or payee — no third party can override a settlement
+  app.post("/admin/override-settlement", { preHandler: operatorAuth }, async (req, reply) => {
+    const { escrow_id, new_status } = req.body as { escrow_id: string; new_status: string };
+    const wallet = (req as unknown as { wallet: string }).wallet;
 
-    const result = await overrideSettlement(escrow_id, new_status as EscrowStatus, actor);
-    if (!result) return reply.status(404).send({ error: "Escrow not found" });
+    const escrow = await getEscrowById(escrow_id);
+    if (!escrow) return reply.status(404).send({ error: "Escrow not found" });
+    if (escrow.payer !== wallet && escrow.payee !== wallet) {
+      return reply.status(403).send({ error: "Forbidden: not a party to this escrow" });
+    }
+
+    const result = await overrideSettlement(escrow_id, new_status as EscrowStatus, wallet);
     return reply.send(result);
   });
 
-  app.post("/admin/dispute", async (req, reply) => {
-    const { intent_id, reason, actor } = req.body as {
-      intent_id: string; reason: string; actor: string;
-    };
+  // Restricted to the escrow's own payer or payee — no third party can dispute someone else's escrow
+  app.post("/admin/dispute", { preHandler: operatorAuth }, async (req, reply) => {
+    const { intent_id, reason } = req.body as { intent_id: string; reason: string };
+    const wallet = (req as unknown as { wallet: string }).wallet;
 
-    const { rows } = await query(
-      "UPDATE escrows SET status = 'disputed' WHERE intent_id = $1 AND status = 'locked' RETURNING escrow_id",
+    const { rows: candidates } = await query(
+      "SELECT escrow_id, payer, payee FROM escrows WHERE intent_id = $1 AND status = 'locked'",
       [intent_id]
     );
+    const owned = candidates.filter((r) => r.payer === wallet || r.payee === wallet);
+    if (owned.length === 0) {
+      return reply.status(403).send({ error: "Forbidden: not a party to this intent's escrow" });
+    }
 
-    for (const row of rows) {
+    for (const row of owned) {
+      await query("UPDATE escrows SET status = 'disputed' WHERE escrow_id = $1", [row.escrow_id]);
       await EscrowVault.dispute(row.escrow_id as string);
     }
 
     await query(
       `INSERT INTO audit_logs (actor, action, entity_id, entity_type, details)
        VALUES ($1, 'open_dispute', $2, 'intent', $3)`,
-      [actor, intent_id, JSON.stringify({ reason })]
+      [wallet, intent_id, JSON.stringify({ reason })]
     );
 
     return reply.send({ message: "Dispute opened", intent_id });

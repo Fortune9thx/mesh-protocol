@@ -18,8 +18,15 @@ export async function agentRoutes(app: FastifyInstance) {
   // Update agent
   app.patch("/agents/:id", { preHandler: walletAuth }, async (req, reply) => {
     const { id } = req.params as { id: string };
+    const wallet = (req as unknown as { wallet: string }).wallet;
+
+    const existing = await AgentService.getAgent(id);
+    if (!existing) return reply.status(404).send({ error: "Agent not found" });
+    if (existing.owner_wallet !== wallet) {
+      return reply.status(403).send({ error: "Forbidden: not the owner of this agent" });
+    }
+
     const agent = await AgentService.updateAgent(id, req.body as Record<string, unknown>);
-    if (!agent) return reply.status(404).send({ error: "Agent not found" });
     return reply.send(agent);
   });
 
@@ -38,12 +45,18 @@ export async function agentRoutes(app: FastifyInstance) {
     return reply.send(agent);
   });
 
-  // Admin: pause agent
+  // Admin: pause agent — restricted to the agent's own owner
   app.post("/admin/pause-agent/:id", { preHandler: operatorAuth }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const wallet = (req as unknown as { wallet: string }).wallet;
+
+    const existing = await AgentService.getAgent(id);
+    if (!existing) return reply.status(404).send({ error: "Agent not found" });
+    if (existing.owner_wallet !== wallet) {
+      return reply.status(403).send({ error: "Forbidden: not the owner of this agent" });
+    }
+
     const agent = await AgentService.pauseAgent(id);
-    if (!agent) return reply.status(404).send({ error: "Agent not found" });
     await auditLog(wallet, "pause_agent", id, "agent");
     return reply.send(agent);
   });
