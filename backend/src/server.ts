@@ -9,8 +9,11 @@ import { intentRoutes } from "./api/intents.js";
 import { matchingRoutes } from "./api/matching.js";
 import { negotiationRoutes } from "./api/negotiation.js";
 import { deliverableRoutes } from "./api/deliverables.js";
-import { analyticsRoutes } from "./api/analytics.js";
+import { analyticsRoutes, broadcastEvent } from "./api/analytics.js";
+import { setBroadcast } from "./services/events.js";
 import { getPool } from "./db/schema.js";
+
+setBroadcast(broadcastEvent);
 
 const PORT = Number(process.env.PORT ?? 3100);
 const HOST = process.env.HOST ?? "0.0.0.0";

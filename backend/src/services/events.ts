@@ -2,6 +2,12 @@ import { v4 as uuid } from "uuid";
 import { query } from "../db/schema.js";
 import type { EventType } from "../types/index.js";
 
+// Lazy import to avoid circular dependency (analytics imports events, events imports analytics)
+let _broadcast: ((e: Record<string, unknown>) => void) | null = null;
+export function setBroadcast(fn: (e: Record<string, unknown>) => void) {
+  _broadcast = fn;
+}
+
 export async function emitEvent(
   eventType: EventType,
   entityId: string,
@@ -23,6 +29,7 @@ export async function emitEvent(
     [event.event_id, event.event_type, event.entity_id, event.entity_type, JSON.stringify(event.payload), event.timestamp]
   );
 
+  _broadcast?.(event);
   return event;
 }
 

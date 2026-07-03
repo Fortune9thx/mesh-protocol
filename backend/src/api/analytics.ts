@@ -1,8 +1,18 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { query } from "../db/schema.js";
 import { overrideSettlement } from "../services/settlement.js";
 import { EscrowVault } from "../genlayer/client.js";
 import type { EscrowStatus } from "../types/index.js";
+
+// SSE client registry
+const sseClients = new Set<FastifyReply>();
+
+export function broadcastEvent(event: Record<string, unknown>) {
+  const data = `data: ${JSON.stringify(event)}\n\n`;
+  for (const client of sseClients) {
+    try { client.raw.write(data); } catch { sseClients.delete(client); }
+  }
+}
 
 export async function analyticsRoutes(app: FastifyInstance) {
   app.get("/analytics", async (_req, reply) => {
@@ -42,6 +52,20 @@ export async function analyticsRoutes(app: FastifyInstance) {
       [limit]
     );
     return reply.send(rows);
+  });
+
+  // Server-Sent Events — real-time event stream for the frontend dashboard
+  app.get("/events/stream", (_req: FastifyRequest, reply: FastifyReply) => {
+    reply.raw.setHeader("Content-Type", "text/event-stream");
+    reply.raw.setHeader("Cache-Control", "no-cache");
+    reply.raw.setHeader("Connection", "keep-alive");
+    reply.raw.setHeader("Access-Control-Allow-Origin", "*");
+    reply.raw.flushHeaders();
+
+    reply.raw.write("data: {\"type\":\"connected\"}\n\n");
+    sseClients.add(reply);
+
+    reply.raw.on("close", () => sseClients.delete(reply));
   });
 
   app.get("/audit-logs", async (req, reply) => {
