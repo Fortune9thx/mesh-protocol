@@ -23,11 +23,11 @@ export interface ApiResult<T> {
   error?: string;
 }
 
-async function safePost<T>(path: string, body: unknown): Promise<ApiResult<T>> {
+async function safePost<T>(path: string, body: unknown, wallet: string = DEMO_WALLET): Promise<ApiResult<T>> {
   try {
     const res = await fetch(`${API_URL}${path}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Wallet-Address": DEMO_WALLET },
+      headers: { "Content-Type": "application/json", "X-Wallet-Address": wallet },
       body: JSON.stringify(body),
     });
     const data = (await res.json().catch(() => null)) as T | { error: unknown } | null;
@@ -81,20 +81,20 @@ export interface RegisterAgentPayload {
   spending_limit: number;
 }
 
-export function registerAgent(payload: RegisterAgentPayload) {
-  return safePost<Agent>("/agents/register", payload);
+export function registerAgent(payload: RegisterAgentPayload, wallet?: string) {
+  return safePost<Agent>("/agents/register", payload, wallet);
 }
 
-export function pauseAgent(agentId: string) {
-  return safePost<Agent>(`/admin/pause-agent/${agentId}`, {});
+export function pauseAgent(agentId: string, wallet?: string) {
+  return safePost<Agent>(`/admin/pause-agent/${agentId}`, {}, wallet);
 }
 
-export function overrideSettlement(escrowId: string, newStatus: "released" | "refunded" | "disputed") {
-  return safePost<Escrow>("/admin/override-settlement", { escrow_id: escrowId, new_status: newStatus });
+export function overrideSettlement(escrowId: string, newStatus: "released" | "refunded" | "disputed", wallet?: string) {
+  return safePost<Escrow>("/admin/override-settlement", { escrow_id: escrowId, new_status: newStatus }, wallet);
 }
 
-export function openDispute(intentId: string, reason: string) {
-  return safePost<{ message: string; intent_id: string }>("/admin/dispute", { intent_id: intentId, reason });
+export function openDispute(intentId: string, reason: string, wallet?: string) {
+  return safePost<{ message: string; intent_id: string }>("/admin/dispute", { intent_id: intentId, reason }, wallet);
 }
 
 // Live event stream via SSE. Returns an EventSource the caller must close.

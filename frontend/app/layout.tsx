@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Archivo, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { WalletProvider } from "@/lib/WalletProvider";
 
 const archivo = Archivo({
   variable: "--font-archivo",
@@ -26,7 +27,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${archivo.variable} ${plexMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-obsidian text-bone">{children}</body>
+      <body className="min-h-full flex flex-col bg-obsidian text-bone">
+        <WalletProvider>{children}</WalletProvider>
+      </body>
     </html>
   );
 }

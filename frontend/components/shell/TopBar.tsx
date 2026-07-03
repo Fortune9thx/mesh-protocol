@@ -1,5 +1,7 @@
 import Image from "next/image";
 import type { View } from "@/lib/types";
+import { useWallet } from "@/lib/WalletProvider";
+import { shortenAddress } from "@/lib/wallet";
 
 const surfaceTitles: Record<View, string> = {
   overview: "PROTOCOL OVERVIEW",
@@ -8,6 +10,8 @@ const surfaceTitles: Record<View, string> = {
 };
 
 export function TopBar({ view }: { view: View }) {
+  const { address, connecting, connect, onCorrectChain } = useWallet();
+
   return (
     <div className="h-[72px] flex-none flex items-center justify-between px-8 border-b border-white/9 bg-graphite">
       <div className="flex items-center gap-4.5">
@@ -29,10 +33,29 @@ export function TopBar({ view }: { view: View }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="font-mono text-[11px] tracking-[0.08em] uppercase text-[#8a8a86] border border-white/14 px-3.5 py-1.5">
-          MAINNET
-        </div>
-        <div className="w-8 h-8 rounded-sm bg-[#1c1c1c] border border-white/14" />
+        {address ? (
+          <div
+            className="font-mono text-[11px] tracking-[0.08em] uppercase border px-3.5 py-1.5"
+            style={{
+              color: onCorrectChain ? "#8a8a86" : "oklch(65% 0.1 30)",
+              borderColor: onCorrectChain ? "rgba(255,255,255,0.14)" : "oklch(40% 0.08 30)",
+            }}
+            title={onCorrectChain ? "GenLayer Bradbury Testnet" : "Wrong network — expected Bradbury"}
+          >
+            {onCorrectChain ? "BRADBURY" : "WRONG NETWORK"}
+          </div>
+        ) : (
+          <div className="font-mono text-[11px] tracking-[0.08em] uppercase text-[#8a8a86] border border-white/14 px-3.5 py-1.5">
+            BRADBURY
+          </div>
+        )}
+        <button
+          onClick={connect}
+          disabled={connecting}
+          className="h-8 px-3 flex items-center gap-2 rounded-sm bg-[#1c1c1c] border border-white/14 font-mono text-[10.5px] tracking-[0.06em] uppercase text-bone cursor-pointer hover:bg-white/6 transition-colors duration-150 disabled:opacity-50 disabled:cursor-wait"
+        >
+          {connecting ? "CONNECTING…" : address ? shortenAddress(address) : "CONNECT WALLET"}
+        </button>
       </div>
     </div>
   );

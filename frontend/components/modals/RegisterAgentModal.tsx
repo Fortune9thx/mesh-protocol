@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ModalOverlay } from "./ModalOverlay";
 import { DEMO_WALLET, registerAgent } from "@/lib/api";
+import { useWallet } from "@/lib/WalletProvider";
 
 interface Field {
   key: string;
@@ -30,6 +31,7 @@ const stepFields: Record<number, Field[]> = {
 };
 
 export function RegisterAgentModal({ onClose, onRegistered }: { onClose: () => void; onRegistered?: () => void }) {
+  const { address: connectedWallet } = useWallet();
   const [step, setStep] = useState(1);
   const [values, setValues] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -42,17 +44,20 @@ export function RegisterAgentModal({ onClose, onRegistered }: { onClose: () => v
   const handleSubmit = async () => {
     setSubmitting(true);
     setError(null);
-    const result = await registerAgent({
-      name: values.name || "unnamed-agent",
-      owner_wallet: values.owner_wallet || DEMO_WALLET,
-      category: values.category || "general",
-      capabilities: (values.capabilities || "general").split(",").map((c) => c.trim()).filter(Boolean),
-      pricing_model: "per_task",
-      base_price: Number(values.base_price?.replace(/,/g, "")) || 0,
-      availability: true,
-      autonomy_level: 1,
-      spending_limit: Number(values.spending_limit?.replace(/,/g, "")) || 1000,
-    });
+    const result = await registerAgent(
+      {
+        name: values.name || "unnamed-agent",
+        owner_wallet: values.owner_wallet || connectedWallet || DEMO_WALLET,
+        category: values.category || "general",
+        capabilities: (values.capabilities || "general").split(",").map((c) => c.trim()).filter(Boolean),
+        pricing_model: "per_task",
+        base_price: Number(values.base_price?.replace(/,/g, "")) || 0,
+        availability: true,
+        autonomy_level: 1,
+        spending_limit: Number(values.spending_limit?.replace(/,/g, "")) || 1000,
+      },
+      connectedWallet ?? undefined
+    );
     setSubmitting(false);
     if (result.ok) {
       onRegistered?.();

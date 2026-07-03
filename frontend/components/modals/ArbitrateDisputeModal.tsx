@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ModalOverlay } from "./ModalOverlay";
 import { overrideSettlement } from "@/lib/api";
+import { useWallet } from "@/lib/WalletProvider";
 import type { Escrow } from "@/lib/types";
 
 const evidenceChips = [
@@ -22,6 +23,7 @@ interface ArbitrateDisputeModalProps {
 }
 
 export function ArbitrateDisputeModal({ onClose, escrow = null, onResolved }: ArbitrateDisputeModalProps) {
+  const { address: connectedWallet } = useWallet();
   const [submitting, setSubmitting] = useState<"released" | "refunded" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +34,7 @@ export function ArbitrateDisputeModal({ onClose, escrow = null, onResolved }: Ar
     }
     setSubmitting(status);
     setError(null);
-    const result = await overrideSettlement(escrow.escrow_id, status);
+    const result = await overrideSettlement(escrow.escrow_id, status, connectedWallet ?? undefined);
     setSubmitting(null);
     if (result.ok) {
       onResolved?.();

@@ -5,6 +5,7 @@ import { consoleAgentRows, globalLimits } from "@/lib/mockData";
 import { AutonomyToggle } from "@/components/primitives/AutonomyToggle";
 import { Button } from "@/components/primitives/Button";
 import { pauseAgent } from "@/lib/api";
+import { useWallet } from "@/lib/WalletProvider";
 import type { Agent } from "@/lib/types";
 
 interface ConsoleSurfaceProps {
@@ -48,6 +49,7 @@ const statusColor = (status: string, paused: boolean) => {
 };
 
 export function ConsoleSurface({ onOpenRegister, onOpenFund, agents = [] }: ConsoleSurfaceProps) {
+  const { address: connectedWallet } = useWallet();
   const usingRealData = agents.length > 0;
   const rows: Row[] = usingRealData
     ? agents.map(agentToRow)
@@ -69,7 +71,7 @@ export function ConsoleSurface({ onOpenRegister, onOpenFund, agents = [] }: Cons
       setPaused((prev) => ({ ...prev, [id]: !prev[id] }));
       return;
     }
-    const result = await pauseAgent(id);
+    const result = await pauseAgent(id, connectedWallet ?? undefined);
     if (result.ok) {
       setPaused((prev) => ({ ...prev, [id]: true }));
     } else {
