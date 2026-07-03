@@ -16,6 +16,7 @@ import { useLiveEvents } from "@/lib/useLiveEvents";
 import { toTickerLine } from "@/lib/eventFormat";
 import { useAgents } from "@/lib/useAgents";
 import { useTopologyData } from "@/lib/useTopologyData";
+import { useDisputedEscrows } from "@/lib/useDisputedEscrows";
 
 export default function Home() {
   const [view, setView] = useState<View>("overview");
@@ -24,6 +25,7 @@ export default function Home() {
   const liveTickerLines = liveRaw.map(toTickerLine);
   const { agents, refetch: refetchAgents } = useAgents();
   const { nodes: realNodes, edges: realEdges } = useTopologyData(agents);
+  const { escrows: disputedEscrows, refetch: refetchDisputes } = useDisputedEscrows();
 
   const goToWorkbench = () => setView("workbench");
 
@@ -87,7 +89,13 @@ export default function Home() {
         {modal === "register" && (
           <RegisterAgentModal onClose={() => setModal(null)} onRegistered={refetchAgents} />
         )}
-        {modal === "arbitrate" && <ArbitrateDisputeModal onClose={() => setModal(null)} />}
+        {modal === "arbitrate" && (
+          <ArbitrateDisputeModal
+            onClose={() => setModal(null)}
+            escrow={disputedEscrows[0] ?? null}
+            onResolved={refetchDisputes}
+          />
+        )}
         {modal === "fund" && <FundWalletModal onClose={() => setModal(null)} />}
       </div>
 

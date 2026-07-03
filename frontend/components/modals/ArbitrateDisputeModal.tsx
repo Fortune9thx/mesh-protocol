@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { ModalOverlay } from "./ModalOverlay";
+import { overrideSettlement } from "@/lib/api";
+import type { Escrow } from "@/lib/types";
 
 const evidenceChips = [
   { label: "SCHEMA PASS", color: "#9a9a96", border: "rgba(255,255,255,0.12)" },
@@ -10,18 +13,46 @@ const evidenceChips = [
   { label: "ESCROW $12,400 FROZEN", color: "oklch(78% 0.07 245)", border: "oklch(55% 0.08 245)" },
 ];
 
-// TODO: wire actions to POST /admin/override-settlement (release/refund) and /admin/dispute
+const short = (s: string) => (s.length > 12 ? `${s.slice(0, 6)}…${s.slice(-4)}` : s);
 
-export function ArbitrateDisputeModal({ onClose }: { onClose: () => void }) {
+interface ArbitrateDisputeModalProps {
+  onClose: () => void;
+  escrow?: Escrow | null;
+  onResolved?: () => void;
+}
+
+export function ArbitrateDisputeModal({ onClose, escrow = null, onResolved }: ArbitrateDisputeModalProps) {
+  const [submitting, setSubmitting] = useState<"released" | "refunded" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const resolve = async (status: "released" | "refunded") => {
+    if (!escrow) {
+      onClose();
+      return;
+    }
+    setSubmitting(status);
+    setError(null);
+    const result = await overrideSettlement(escrow.escrow_id, status);
+    setSubmitting(null);
+    if (result.ok) {
+      onResolved?.();
+      onClose();
+    } else {
+      setError(result.error ?? "Failed to resolve dispute — check wallet is a party to this escrow.");
+    }
+  };
+
   return (
     <ModalOverlay onClose={onClose}>
       <div className="w-[680px] bg-graphite border border-[oklch(35%_0.06_30)]">
         <div className="flex justify-between items-center px-6 py-5 border-b border-white/8">
           <div>
             <div className="font-mono text-[9.5px] tracking-[0.14em] uppercase text-[oklch(65%_0.1_30)]">
-              DISPUTE ARBITRATION · #C-8841
+              DISPUTE ARBITRATION · {escrow ? `ESCROW ${short(escrow.escrow_id)}` : "#C-8841"}
             </div>
-            <div className="text-[18px] font-extrabold mt-1">risk-agent-07 ↔ exec-agent-02</div>
+            <div className="text-[18px] font-extrabold mt-1">
+              {escrow ? `${short(escrow.payer)} ↔ ${short(escrow.payee)}` : "risk-agent-07 ↔ exec-agent-02"}
+            </div>
           </div>
           <button onClick={onClose} className="font-mono text-[13px] text-[#5f5f5b] hover:text-bone px-2 py-1 cursor-pointer">
             ✕
@@ -68,22 +99,32 @@ export function ArbitrateDisputeModal({ onClose }: { onClose: () => void }) {
           />
         </div>
 
+        {error && (
+          <div className="mx-6 mb-4 font-mono text-[10.5px] text-[oklch(65%_0.1_30)] border border-[oklch(40%_0.08_30)] px-3.5 py-2.5">
+            {error}
+          </div>
+        )}
+
         <div className="flex gap-2.5 px-6 pb-5.5">
           <button
-            onClick={onClose}
-            className="flex-1 text-center font-mono text-[10px] tracking-[0.08em] uppercase border border-white/26 py-2.5 cursor-pointer hover:bg-white/6 transition-colors duration-150"
+            disabled={submitting !== null}
+            onClick={() => resolve("released")}
+            className="flex-1 text-center font-mono text-[10px] tracking-[0.08em] uppercase border border-white/26 py-2.5 cursor-pointer hover:bg-white/6 transition-colors duration-150 disabled:opacity-50 disabled:cursor-wait"
           >
-            RELEASE ESCROW TO AGENT
+            {submitting === "released" ? "RELEASING…" : "RELEASE ESCROW TO AGENT"}
+          </button>
+          <button
+            disabled={submitting !== null}
+            onClick={() => resolve("refunded")}
+            className="flex-1 text-center font-mono text-[10px] tracking-[0.08em] uppercase border border-[oklch(45%_0.09_30)] text-[oklch(65%_0.1_30)] py-2.5 cursor-pointer hover:bg-[oklch(20%_0.04_30)] transition-colors duration-150 disabled:opacity-50 disabled:cursor-wait"
+          >
+            {submitting === "refunded" ? "REFUNDING…" : "REFUND BUYER"}
           </button>
           <button
             onClick={onClose}
-            className="flex-1 text-center font-mono text-[10px] tracking-[0.08em] uppercase border border-[oklch(45%_0.09_30)] text-[oklch(65%_0.1_30)] py-2.5 cursor-pointer hover:bg-[oklch(20%_0.04_30)] transition-colors duration-150"
-          >
-            REFUND BUYER
-          </button>
-          <button
-            onClick={onClose}
-            className="flex-none w-[130px] text-center font-mono text-[10px] tracking-[0.08em] uppercase border border-white/12 text-[#8a8a86] py-2.5 cursor-pointer hover:bg-white/4 transition-colors duration-150"
+            disabled={!!escrow}
+            title={escrow ? "Split settlement is not supported by EscrowVault yet" : undefined}
+            className="flex-none w-[130px] text-center font-mono text-[10px] tracking-[0.08em] uppercase border border-white/12 text-[#8a8a86] py-2.5 cursor-pointer hover:bg-white/4 transition-colors duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             SPLIT 50/50
           </button>
