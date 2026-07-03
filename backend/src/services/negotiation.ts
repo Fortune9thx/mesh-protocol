@@ -116,6 +116,14 @@ export async function getNegotiationsForIntent(intentId: string): Promise<Negoti
   return rows as Negotiation[];
 }
 
+export async function listNegotiations(limit = 100): Promise<Negotiation[]> {
+  const { rows } = await query(
+    "SELECT * FROM negotiations ORDER BY created_at DESC LIMIT $1",
+    [limit]
+  );
+  return rows as Negotiation[];
+}
+
 // Auto-negotiate: find acceptable midpoint between proposed and counter
 export function resolveCompromise(
   proposed: number,

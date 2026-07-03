@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+:root {
+  --color-obsidian: #0a0a0a;
+  --color-graphite: #0d0d0d;
+  --color-titanium: #151515;
+  --color-bone: #ececea;
+  --color-signal: oklch(78% 0.07 245);
+  --color-rust: oklch(55% 0.1 30);
+}
+
+@theme inline {
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), monospace;
+
+  --color-obsidian: #0a0a0a;
+  --color-graphite: #0d0d0d;
+  --color-titanium: #151515;
+  --color-bone: #ececea;
+  --color-signal: oklch(78% 0.07 245);
+  --color-rust: oklch(55% 0.1 30);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-obsidian);
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: rgba(236, 236, 234, 0.2);
+}
+
+@keyframes dashFlow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+@keyframes fractureJitter {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(0.6px, -0.8px);
+  }
+  50% {
+    transform: translate(-0.7px, 0.5px);
+  }
+  75% {
+    transform: translate(0.4px, 0.9px);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes tickerScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.font-mono-label {
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

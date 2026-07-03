@@ -67,4 +67,11 @@ export async function negotiationRoutes(app: FastifyInstance) {
     const negotiations = await NegotiationService.getNegotiationsForIntent(intentId);
     return reply.send(negotiations);
   });
+
+  app.get("/negotiations", async (req, reply) => {
+    const q = req.query as Record<string, string>;
+    const limit = Math.min(Number(q.limit ?? 100), 200);
+    const negotiations = await NegotiationService.listNegotiations(limit);
+    return reply.send(negotiations);
+  });
 }

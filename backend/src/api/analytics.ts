@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { query } from "../db/schema.js";
-import { overrideSettlement, getEscrowById } from "../services/settlement.js";
+import { overrideSettlement, getEscrowById, listEscrows } from "../services/settlement.js";
 import { EscrowVault } from "../genlayer/client.js";
 import { operatorAuth } from "../middleware/auth.js";
 import type { EscrowStatus } from "../types/index.js";
@@ -67,6 +67,13 @@ export async function analyticsRoutes(app: FastifyInstance) {
     sseClients.add(reply);
 
     reply.raw.on("close", () => sseClients.delete(reply));
+  });
+
+  app.get("/escrows", async (req, reply) => {
+    const q = req.query as Record<string, string>;
+    const limit = Math.min(Number(q.limit ?? 100), 200);
+    const escrows = await listEscrows(limit);
+    return reply.send(escrows);
   });
 
   app.get("/audit-logs", async (req, reply) => {
