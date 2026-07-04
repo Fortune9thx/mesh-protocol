@@ -66,6 +66,28 @@ body {
   background: rgba(236, 236, 234, 0.2);
 }
 
+/* ── Landing: protocol acts (stacked, scrub-swapped) ── */
+.sec-protocol .act {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-58%) translateX(0);
+  opacity: 0;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  pointer-events: none;
+}
+.sec-protocol .act.act-on {
+  opacity: 1;
+  transform: translateY(-58%);
+}
+.act-step {
+  border-bottom: 1px solid transparent;
+  transition: color 0.3s, border-color 0.3s;
+}
+.act-step.step-on {
+  color: var(--mesh-white);
+  border-color: var(--mesh-blue);
+}
+
 @keyframes dashFlow {
   to {
     stroke-dashoffset: -24;
