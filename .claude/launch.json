@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mockups",
+      "runtimeExecutable": "C:\\Users\\HP\\nodejs\\npx.cmd",
+      "runtimeArgs": ["serve", "frontend/public", "-l", "5050"],
+      "port": 5050
+    },
+    {
+      "name": "frontend",
+      "runtimeExecutable": "C:\\Users\\HP\\nodejs\\npm.cmd",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "frontend",
+      "port": 3000
+    }
+  ]
+}
