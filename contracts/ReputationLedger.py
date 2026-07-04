@@ -1,4 +1,4 @@
-# { "Depends": "py-genlayer:test" }
+# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 # Mesh Protocol — Reputation Ledger
 # GenLayer Intelligent Contract
 # Layer 5: Post-settlement reputation
@@ -18,10 +18,7 @@ class ReputationLedger(gl.Contract):
     quality_sum: TreeMap[str, u64]
 
     def __init__(self) -> None:
-        self.total_tasks = TreeMap()
-        self.successful = TreeMap()
-        self.failed = TreeMap()
-        self.quality_sum = TreeMap()
+        pass
 
     @gl.public.write
     def record_outcome(self, agent_id: str, success: bool, quality_score: u64) -> None:

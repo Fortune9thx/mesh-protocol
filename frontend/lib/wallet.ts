@@ -82,6 +82,15 @@ function parseDecimalToWeiHex(valueGen: string): string {
   return "0x" + wei.toString(16);
 }
 
+// Signs a message using EIP-191 personal_sign (MetaMask prompt).
+export async function signMessage(provider: Eip1193Provider, address: string, message: string): Promise<string> {
+  const msgHex = "0x" + Buffer.from(message, "utf8").toString("hex");
+  return (await provider.request({
+    method: "personal_sign",
+    params: [msgHex, address],
+  })) as string;
+}
+
 export function shortenAddress(address: string): string {
   return address.length > 10 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address;
 }

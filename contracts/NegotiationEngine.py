@@ -1,4 +1,4 @@
-# { "Depends": "py-genlayer:test" }
+# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 # Mesh Protocol — Negotiation Engine
 # GenLayer Intelligent Contract
 # Layer 4: On-chain negotiation state
@@ -19,11 +19,7 @@ class NegotiationEngine(gl.Contract):
     intent_map: TreeMap[str, str]        # negotiation_id -> intent_id
 
     def __init__(self) -> None:
-        self.statuses = TreeMap()
-        self.agreed_prices = TreeMap()
-        self.providers = TreeMap()
-        self.requesters = TreeMap()
-        self.intent_map = TreeMap()
+        pass
 
     @gl.public.write
     def record_negotiation(

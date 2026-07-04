@@ -3,6 +3,13 @@ import Fastify from "fastify";
 
 vi.mock("../../src/db/schema.js", () => ({ query: vi.fn() }));
 vi.mock("../../src/services/events.js", () => ({ emitEvent: vi.fn() }));
+vi.mock("../../src/genlayer/client.js", () => ({
+  AgentRegistry:     { registerAgent: vi.fn(), pauseAgent: vi.fn(), isActive: vi.fn(), getSpendingLimit: vi.fn() },
+  IntentRegistry:    { submitIntent: vi.fn(), updateStatus: vi.fn(), cancelIntent: vi.fn(), getStatus: vi.fn() },
+  EscrowVault:       { lock: vi.fn(), release: vi.fn(), refund: vi.fn(), dispute: vi.fn(), resolveDispute: vi.fn(), getStatus: vi.fn() },
+  NegotiationEngine: { record: vi.fn(), accept: vi.fn(), reject: vi.fn() },
+  ReputationLedger:  { recordOutcome: vi.fn(), getReliability: vi.fn(), getStats: vi.fn() },
+}));
 
 import { query } from "../../src/db/schema.js";
 import { agentRoutes } from "../../src/api/agents.js";

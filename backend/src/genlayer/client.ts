@@ -1,132 +1,160 @@
 /**
  * GenLayer contract client.
- * In production: uses the GenLayer JS SDK to call on-chain contracts.
- * In development/mock mode: logs calls and returns stub responses.
+ * Uses the genlayer-js SDK for signed writes and view reads on Bradbury testnet.
+ * Falls back to mock mode when GENLAYER_PRIVATE_KEY is absent (dev/test).
+ *
+ * Write calls are fire-and-forget: we log errors but never throw — the
+ * PostgreSQL DB is the authoritative source of truth; the chain anchors it.
  */
 
 import "dotenv/config";
 
-const GENLAYER_RPC = process.env.GENLAYER_RPC_URL ?? "http://localhost:8545";
-const MOCK_MODE = !process.env.GENLAYER_PRIVATE_KEY || process.env.NODE_ENV === "test";
+export const MOCK_MODE =
+  !process.env.GENLAYER_PRIVATE_KEY || process.env.NODE_ENV === "test";
 
-// Deployed on GenLayer Studionet — 2026-07-02
-const CONTRACT_ADDRESSES: Record<string, string> = {
-  AgentRegistry:     "0xe51b155743973152B29E2120Fc406B27774c7912",
-  IntentRegistry:    "0xb276d1F07C9f2a457Ed016bf059ca5a7F6d8a488",
-  NegotiationEngine: "0x71487Ce846a6D033489a7c2E265CebB2f76ed92B",
-  EscrowVault:       "0xEDFd69fC2baf063Ac5d71DDA6AFB34C2368Ced52",
-  ReputationLedger:  "0x4b387Ff21a27194Bd93a3aE6241C5A7D66E6643E",
+// Deployed on GenLayer Bradbury Testnet — 2026-07-04
+export const CONTRACT_ADDRESSES: Record<string, `0x${string}`> = {
+  AgentRegistry:     "0xB31900eE7fa37E7e8a2cd49212125e49efdBEa2c",
+  IntentRegistry:    "0x4a2CB695c015F4198627135249a093425a5080e8",
+  NegotiationEngine: "0xa5C8cd99d081145ef90dDEEC024665CaA21E86C7",
+  EscrowVault:       "0x7Db590E16F1F2E40d0859379b2706fc539db5d65",
+  ReputationLedger:  "0xfA8912C4AA206DdAD7496Cf3df5B6A64AF1e5982",
 };
 
-export interface ContractCall {
-  contract: string;
-  method: string;
-  args: unknown[];
+// Lazily initialised to avoid importing genlayer-js in test env
+let _client: Awaited<ReturnType<typeof buildClient>> | null = null;
+
+async function buildClient() {
+  const { createClient, createAccount } = await import("genlayer-js");
+  const { testnetBradbury } = await import("genlayer-js/chains");
+  const account = createAccount(process.env.GENLAYER_PRIVATE_KEY as `0x${string}`);
+  return createClient({ chain: testnetBradbury, account });
 }
 
-async function call(c: ContractCall): Promise<unknown> {
+async function getClient() {
+  if (!_client) _client = await buildClient();
+  return _client;
+}
+
+function addr(contract: string): `0x${string}` {
+  const a = CONTRACT_ADDRESSES[contract];
+  if (!a) throw new Error(`No deployed address for contract: ${contract}`);
+  return a;
+}
+
+// Fire a write transaction — non-blocking, logs errors.
+async function write(contract: string, method: string, args: unknown[]) {
   if (MOCK_MODE) {
-    console.log(`[GenLayer mock] ${c.contract}.${c.method}(${c.args.join(", ")})`);
-    return { ok: true, mock: true };
+    console.log(`[GenLayer mock] ${contract}.${method}(${args.join(", ")})`);
+    return;
   }
+  try {
+    const client = await getClient();
+    await (client as any).writeContract({
+      address: addr(contract),
+      functionName: method,
+      args,
+    });
+  } catch (err) {
+    console.error(`[GenLayer] write ${contract}.${method} failed:`, (err as Error).message);
+  }
+}
 
-  // Production: POST to GenLayer JSON-RPC node
-  const address = CONTRACT_ADDRESSES[c.contract];
-  if (!address) throw new Error(`No deployed address for contract: ${c.contract}`);
-
-  const res = await fetch(GENLAYER_RPC, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: Date.now(),
-      method: "eth_call",
-      params: [{ contract: address, method: c.method, args: c.args }],
-    }),
-  });
-
-  if (!res.ok) throw new Error(`GenLayer RPC error: ${res.status}`);
-  const data = (await res.json()) as { result?: unknown; error?: { message: string } };
-  if (data.error) throw new Error(`GenLayer error: ${data.error.message}`);
-  return data.result;
+// Call a view function — returns null on error.
+async function read(contract: string, method: string, args: unknown[]): Promise<unknown> {
+  if (MOCK_MODE) {
+    console.log(`[GenLayer mock] ${contract}.${method}(${args.join(", ")})`);
+    return null;
+  }
+  try {
+    const client = await getClient();
+    return await (client as any).readContract({
+      address: addr(contract),
+      functionName: method,
+      args,
+    });
+  } catch (err) {
+    console.error(`[GenLayer] read ${contract}.${method} failed:`, (err as Error).message);
+    return null;
+  }
 }
 
 // ── AgentRegistry ─────────────────────────────────────────────────
 
 export const AgentRegistry = {
   registerAgent: (agentId: string, name: string, category: string, capabilities: string[], basePrice: number) =>
-    call({ contract: "AgentRegistry", method: "register_agent", args: [agentId, name, category, capabilities, basePrice, "", 1, 1000] }),
+    write("AgentRegistry", "register_agent", [agentId, name, category, capabilities.join(","), basePrice, "", 1, 1000]),
 
   pauseAgent: (agentId: string) =>
-    call({ contract: "AgentRegistry", method: "pause_agent", args: [agentId] }),
+    write("AgentRegistry", "pause_agent", [agentId]),
 
   isActive: (agentId: string) =>
-    call({ contract: "AgentRegistry", method: "is_active", args: [agentId] }),
+    read("AgentRegistry", "is_active", [agentId]),
 
   getSpendingLimit: (agentId: string) =>
-    call({ contract: "AgentRegistry", method: "get_spending_limit", args: [agentId] }),
+    read("AgentRegistry", "get_spending_limit", [agentId]),
 };
 
 // ── IntentRegistry ────────────────────────────────────────────────
 
 export const IntentRegistry = {
   submitIntent: (intentId: string, storageHash: string, budget: number, deadline: number) =>
-    call({ contract: "IntentRegistry", method: "submit_intent", args: [intentId, storageHash, budget, deadline] }),
+    write("IntentRegistry", "submit_intent", [intentId, storageHash, budget, deadline]),
 
   updateStatus: (intentId: string, status: string) =>
-    call({ contract: "IntentRegistry", method: "update_status", args: [intentId, status] }),
+    write("IntentRegistry", "update_status", [intentId, status]),
 
   cancelIntent: (intentId: string) =>
-    call({ contract: "IntentRegistry", method: "cancel_intent", args: [intentId] }),
+    write("IntentRegistry", "cancel_intent", [intentId]),
 
   getStatus: (intentId: string) =>
-    call({ contract: "IntentRegistry", method: "get_status", args: [intentId] }),
+    read("IntentRegistry", "get_status", [intentId]),
 };
 
 // ── EscrowVault ───────────────────────────────────────────────────
 
 export const EscrowVault = {
-  lock: (escrowId: string, payee: string, intentId: string, amount: number) =>
-    call({ contract: "EscrowVault", method: "lock", args: [escrowId, payee, intentId, amount] }),
+  lock: (escrowId: string, payee: string, intentId: string, amount: number, negotiationId: string = "") =>
+    write("EscrowVault", "lock", [escrowId, payee, intentId, negotiationId]),
 
   release: (escrowId: string) =>
-    call({ contract: "EscrowVault", method: "release", args: [escrowId] }),
+    write("EscrowVault", "release", [escrowId]),
 
   refund: (escrowId: string) =>
-    call({ contract: "EscrowVault", method: "refund", args: [escrowId] }),
+    write("EscrowVault", "refund", [escrowId]),
 
   dispute: (escrowId: string) =>
-    call({ contract: "EscrowVault", method: "dispute", args: [escrowId] }),
+    write("EscrowVault", "dispute", [escrowId]),
 
   resolveDispute: (escrowId: string, releaseToPayee: boolean) =>
-    call({ contract: "EscrowVault", method: "resolve_dispute", args: [escrowId, releaseToPayee] }),
+    write("EscrowVault", "resolve_dispute", [escrowId, releaseToPayee]),
 
   getStatus: (escrowId: string) =>
-    call({ contract: "EscrowVault", method: "get_status", args: [escrowId] }),
+    read("EscrowVault", "get_status", [escrowId]),
 };
 
 // ── NegotiationEngine ─────────────────────────────────────────────
 
 export const NegotiationEngine = {
   record: (negotiationId: string, intentId: string, requester: string, provider: string, price: number) =>
-    call({ contract: "NegotiationEngine", method: "record_negotiation", args: [negotiationId, intentId, requester, provider, price] }),
+    write("NegotiationEngine", "record_negotiation", [negotiationId, intentId, requester, provider, price]),
 
   accept: (negotiationId: string, finalPrice: number) =>
-    call({ contract: "NegotiationEngine", method: "accept", args: [negotiationId, finalPrice] }),
+    write("NegotiationEngine", "accept", [negotiationId, finalPrice]),
 
   reject: (negotiationId: string) =>
-    call({ contract: "NegotiationEngine", method: "reject", args: [negotiationId] }),
+    write("NegotiationEngine", "reject", [negotiationId]),
 };
 
 // ── ReputationLedger ──────────────────────────────────────────────
 
 export const ReputationLedger = {
   recordOutcome: (agentId: string, success: boolean, qualityScore: number) =>
-    call({ contract: "ReputationLedger", method: "record_outcome", args: [agentId, success, Math.round(qualityScore)] }),
+    write("ReputationLedger", "record_outcome", [agentId, success, Math.round(qualityScore)]),
 
   getReliability: (agentId: string) =>
-    call({ contract: "ReputationLedger", method: "get_reliability", args: [agentId] }),
+    read("ReputationLedger", "get_reliability", [agentId]),
 
   getStats: (agentId: string) =>
-    call({ contract: "ReputationLedger", method: "get_stats", args: [agentId] }),
+    read("ReputationLedger", "get_stats", [agentId]),
 };

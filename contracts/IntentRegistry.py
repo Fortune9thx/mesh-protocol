@@ -1,4 +1,4 @@
-# { "Depends": "py-genlayer:test" }
+# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 # Mesh Protocol — Intent Registry
 # GenLayer Intelligent Contract
 # Layer 2: Intent storage and lifecycle
@@ -12,7 +12,7 @@ class IntentRegistry(gl.Contract):
     """
 
     # intent_id -> requester
-    requesters: TreeMap[str, str]
+    requesters: TreeMap[str, Address]
     # intent_id -> status
     statuses: TreeMap[str, str]
     # intent_id -> budget (GEN wei)
@@ -23,11 +23,7 @@ class IntentRegistry(gl.Contract):
     deadlines: TreeMap[str, u64]
 
     def __init__(self) -> None:
-        self.requesters = TreeMap()
-        self.statuses = TreeMap()
-        self.budgets = TreeMap()
-        self.storage_hashes = TreeMap()
-        self.deadlines = TreeMap()
+        pass
 
     @gl.public.write
     def submit_intent(
@@ -64,7 +60,9 @@ class IntentRegistry(gl.Contract):
 
     @gl.public.view
     def get_requester(self, intent_id: str) -> str:
-        return self.requesters.get(intent_id, "")
+        if intent_id in self.requesters:
+            return self.requesters[intent_id].as_hex
+        return ""
 
     @gl.public.view
     def get_budget(self, intent_id: str) -> u256:

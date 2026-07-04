@@ -71,7 +71,7 @@ export function ConsoleSurface({ onOpenRegister, onOpenFund, agents = [] }: Cons
       setPaused((prev) => ({ ...prev, [id]: !prev[id] }));
       return;
     }
-    const result = await pauseAgent(id, connectedWallet ?? undefined);
+    const result = await pauseAgent(id);
     if (result.ok) {
       setPaused((prev) => ({ ...prev, [id]: true }));
     } else {

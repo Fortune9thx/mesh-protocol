@@ -10,7 +10,8 @@ export async function lockEscrow(
   intentId: string,
   payer: string,
   payee: string,
-  amount: number
+  amount: number,
+  negotiationId: string = ""
 ): Promise<Escrow> {
   const id = uuid();
   const { rows } = await query(
@@ -18,7 +19,7 @@ export async function lockEscrow(
      VALUES ($1,$2,$3,$4,$5,'locked') RETURNING *`,
     [id, intentId, payer, payee, amount]
   );
-  await EscrowVault.lock(id, payee, intentId, amount);
+  await EscrowVault.lock(id, payee, intentId, amount, negotiationId);
   await emitEvent("escrow_locked", id, "escrow", { intent_id: intentId, amount });
   return rows[0] as Escrow;
 }

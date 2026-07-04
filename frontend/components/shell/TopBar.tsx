@@ -10,7 +10,7 @@ const surfaceTitles: Record<View, string> = {
 };
 
 export function TopBar({ view }: { view: View }) {
-  const { address, connecting, connect, onCorrectChain } = useWallet();
+  const { address, connecting, signingIn, connect, onCorrectChain } = useWallet();
 
   return (
     <div className="h-[72px] flex-none flex items-center justify-between px-8 border-b border-white/9 bg-graphite">
@@ -51,10 +51,10 @@ export function TopBar({ view }: { view: View }) {
         )}
         <button
           onClick={connect}
-          disabled={connecting}
+          disabled={connecting || signingIn}
           className="h-8 px-3 flex items-center gap-2 rounded-sm bg-[#1c1c1c] border border-white/14 font-mono text-[10.5px] tracking-[0.06em] uppercase text-bone cursor-pointer hover:bg-white/6 transition-colors duration-150 disabled:opacity-50 disabled:cursor-wait"
         >
-          {connecting ? "CONNECTING…" : address ? shortenAddress(address) : "CONNECT WALLET"}
+          {signingIn ? "SIGNING…" : connecting ? "CONNECTING…" : address ? shortenAddress(address) : "CONNECT WALLET"}
         </button>
       </div>
     </div>
