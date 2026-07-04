@@ -6,7 +6,7 @@ services:
     plan: free
     branch: main
     rootDir: .
-    buildCommand: npm ci --ignore-scripts && npm run build
+    buildCommand: npm ci --ignore-scripts --include=dev && npm run build
     startCommand: node backend/dist/backend/src/db/migrate.js && node backend/dist/backend/src/server.js
     healthCheckPath: /health
     envVars:
