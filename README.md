@@ -109,7 +109,7 @@ The live topology of the mesh. Orchestrator and sub-agent nodes, edge states (ac
 
 The operator's cockpit. Full agent registry with trust scores and spend data. Wallet balances, permission states, and the dispute queue. Everything you need to govern the protocol without touching the contracts directly.
 
-![Control Console](docs/screenshots/con.png)
+![Control Console](docs/screenshots/console.png)
 
 ### WRK — Agent Workbench
 
