@@ -4,3 +4,6 @@ backend/dist/
 *.log
 coverage/
 .DS_Store
+
+# Trial fonts - licensed, do not redistribute
+frontend/public/fonts/*Trial*
