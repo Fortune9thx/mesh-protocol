@@ -1,6 +1,32 @@
 @import "tailwindcss";
 
+/* ── GT Sectra (trial — swap to licensed files before public launch) ── */
+@font-face { font-family: "GT Sectra Display"; src: url("/fonts/GT-Sectra-Display-Light-Trial.woff2") format("woff2"); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Sectra Display"; src: url("/fonts/GT-Sectra-Display-Light-Italic-Trial.woff2") format("woff2"); font-weight: 300; font-style: italic; font-display: swap; }
+@font-face { font-family: "GT Sectra Display"; src: url("/fonts/GT-Sectra-Display-Regular-Trial.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Sectra Display"; src: url("/fonts/GT-Sectra-Display-Regular-Italic-Trial.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "GT Sectra Display"; src: url("/fonts/GT-Sectra-Display-Medium-Trial.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Sectra Fine"; src: url("/fonts/GT-Sectra-Fine-Book-Trial.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Sectra Fine"; src: url("/fonts/GT-Sectra-Fine-Book-Italic-Trial.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+
 :root {
+  /* ── Mesh design tokens (docs/DESIGN.md §2) ── */
+  --mesh-white: #FAFAF7;
+  --mesh-black: #0A0A0B;
+  --mesh-void: #050506;
+  --mesh-ink: #16161A;
+  --mesh-paper: #F2F1EC;
+  --mesh-g1: #E5E4DF;
+  --mesh-g2: #A8A7A1;
+  --mesh-g3: #55555C;
+  --mesh-g4: #2A2A30;
+  --mesh-blue: #2E5CFF;
+  --mesh-blue-dim: #1D3AA8;
+  --mesh-red: #E23D2E;
+  --mesh-red-dim: #8F2118;
+  --font-serif-display: "GT Sectra Display", Georgia, serif;
+  --font-serif-text: "GT Sectra Fine", Georgia, serif;
+
   --color-obsidian: #0a0a0a;
   --color-graphite: #0d0d0d;
   --color-titanium: #151515;
