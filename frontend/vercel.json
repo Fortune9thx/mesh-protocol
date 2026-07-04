@@ -4,7 +4,7 @@
   "outputDirectory": ".next",
   "installCommand": "npm install",
   "env": {
-    "NEXT_PUBLIC_API_URL": "@mesh_api_url",
-    "NEXT_PUBLIC_TREASURY_ADDRESS": "@mesh_treasury_address"
+    "NEXT_PUBLIC_API_URL": "https://mesh-protocol-api.onrender.com",
+    "NEXT_PUBLIC_TREASURY_ADDRESS": "0x00f42f7ad0edbd0818bd46c8e51cdb5670dde6d9"
   }
 }
