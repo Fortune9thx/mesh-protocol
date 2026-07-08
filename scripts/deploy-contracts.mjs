@@ -50,7 +50,7 @@ const client = createClient({ chain: testnetBradbury, account });
 
 async function deployContract(name, codePath) {
   console.log(`\nDeploying ${name}...`);
-  const code = fs.readFileSync(codePath, "utf8");
+  const code = fs.readFileSync(codePath, "utf8").replace(/\r\n/g, "\n");
   try {
     const tx = await client.deployContract({ code, args: [], leaderOnly: false });
     console.log(`  tx: ${tx}`);

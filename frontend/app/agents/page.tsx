@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { AppChrome } from "@/components/shell/AppChrome";
 import { ProtocolStatusStrip } from "@/components/surfaces/ProtocolStatusStrip";
-import { TopologyWatermark } from "@/components/surfaces/TopologyWatermark";
+import { AmbientBackdrop } from "@/components/surfaces/AmbientBackdrop";
 import { AnimatedNumber } from "@/components/primitives/AnimatedNumber";
 import { useAgents } from "@/lib/useAgents";
 import { useLiveEvents } from "@/lib/useLiveEvents";
@@ -46,9 +46,7 @@ function AgentProfileInner() {
   if (!agent) {
     return (
       <main className="relative mx-auto max-w-[1180px] px-7 py-24">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
-          <TopologyWatermark opacity={1} />
-        </div>
+        <AmbientBackdrop />
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}

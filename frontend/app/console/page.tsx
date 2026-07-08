@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { AppChrome } from "@/components/shell/AppChrome";
 import { ProtocolStatusStrip } from "@/components/surfaces/ProtocolStatusStrip";
 import { InsightCard } from "@/components/surfaces/InsightCard";
-import { TopologyWatermark } from "@/components/surfaces/TopologyWatermark";
+import { AmbientBackdrop } from "@/components/surfaces/AmbientBackdrop";
 import { AnimatedNumber } from "@/components/primitives/AnimatedNumber";
 import { useAgents } from "@/lib/useAgents";
 import { useDisputedEscrows } from "@/lib/useDisputedEscrows";
@@ -103,7 +103,7 @@ function usePersonalAwareness(
 
 export default function CommandCenter() {
   const { agents } = useAgents();
-  const { escrows: disputes, escrows: allEscrows } = useDisputedEscrows();
+  const { escrows: disputes, all: allEscrows } = useDisputedEscrows();
   const { events } = useLiveEvents();
   const { address } = useWallet();
 
@@ -128,10 +128,7 @@ export default function CommandCenter() {
       <ProtocolStatusStrip />
 
       <main className="relative mx-auto max-w-[1180px] px-7 py-9">
-        {/* subtle topology watermark */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <TopologyWatermark opacity={1} />
-        </div>
+        <AmbientBackdrop />
 
         {/* ── Greeting ── */}
         <div className="relative mb-7 flex items-end justify-between">

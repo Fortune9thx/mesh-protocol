@@ -1,4 +1,5 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+
 # Mesh Protocol -- Escrow Vault
 # GenLayer Intelligent Contract
 # Layer 5: Settlement
@@ -9,7 +10,7 @@
 from genlayer import *
 
 # UPDATE THIS after deploying NegotiationEngine
-NEGOTIATION_ENGINE_ADDRESS = Address("0x2F6cba483F933aB2eEe0Fa2F69b9d511258A6172")
+NEGOTIATION_ENGINE_ADDRESS = Address("0xe894c0551CAC6dB315096015a48065C39Fa6acf8")
 
 class EscrowVault(gl.Contract):
     """
@@ -52,7 +53,6 @@ class EscrowVault(gl.Contract):
         self.escrow_count = idx + u256(1)
 
     @gl.public.write
-    @allow_storage(NEGOTIATION_ENGINE_ADDRESS)
     def release(self, escrow_id: str) -> None:
         """
         Release funds to payee. Called after PASS verification.

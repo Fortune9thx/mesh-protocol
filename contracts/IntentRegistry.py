@@ -1,4 +1,5 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+
 # Mesh Protocol -- Intent Registry
 # GenLayer Intelligent Contract
 # Layer 2: Full intent payload stored on-chain (no IPFS hash -- full data)

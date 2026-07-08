@@ -13,11 +13,11 @@
 
 // ── Contract addresses (update after each redeploy) ──────────────────────────
 export const CONTRACT_ADDRESSES = {
-  AgentRegistry:     "0xED1955e0A76de84A0dEA63149524CA8Ea75D69d4" as `0x${string}`,
-  IntentRegistry:    "0xf5Ba55803aB897abf0aBB5ab366012e1EDdC1db2" as `0x${string}`,
-  NegotiationEngine: "0x2F6cba483F933aB2eEe0Fa2F69b9d511258A6172" as `0x${string}`,
-  EscrowVault:       "0x596C8a2e952f0D4f733436F5A84c4B1dD851D6cb" as `0x${string}`,
-  ReputationLedger:  "0x1a6c8BbbF63AC1a6436D3fC9530472Af185d3Ccc" as `0x${string}`,
+  AgentRegistry:     "0x7c5c449693b13EaE076755a3d708c1997Ad588e0" as `0x${string}`,
+  IntentRegistry:    "0x2FC87d06958143c39303702F06b181697454C1Aa" as `0x${string}`,
+  NegotiationEngine: "0xe894c0551CAC6dB315096015a48065C39Fa6acf8" as `0x${string}`,
+  EscrowVault:       "0x8315d7E939B8e873a36c753405eE748905660bea" as `0x${string}`,
+  ReputationLedger:  "0xF7D3F5d3eC23036842423A0DC64335A0D673A4fD" as `0x${string}`,
 } as const;
 
 type ContractName = keyof typeof CONTRACT_ADDRESSES;
