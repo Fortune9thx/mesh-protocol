@@ -79,6 +79,9 @@ export async function writeContract(
       args,
       ...(value !== undefined ? { value } : {}),
     });
+    // Wait for GenLayer validator consensus before returning — without this
+    // the tx is submitted but the state change isn't on-chain yet.
+    await client.waitForTransactionReceipt({ hash, status: "ACCEPTED" });
     return { ok: true, hash: hash as string };
   } catch (err) {
     return { ok: false, error: (err as Error).message };

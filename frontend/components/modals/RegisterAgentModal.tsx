@@ -118,7 +118,7 @@ export function RegisterAgentModal({ onClose, onRegistered }: { onClose: () => v
             onClick={() => (step < 3 ? setStep(step + 1) : handleSubmit())}
             className="font-mono text-[10px] tracking-[0.08em] uppercase px-5.5 py-2.5 border border-white/30 cursor-pointer hover:bg-white/6 transition-colors duration-150 disabled:opacity-50 disabled:cursor-wait"
           >
-            {step === 3 ? (submitting ? "SUBMITTING…" : "SUBMIT REGISTRATION →") : "CONTINUE →"}
+            {step === 3 ? (submitting ? "CONFIRMING ON GENLAYER… (~30s)" : "SUBMIT REGISTRATION →") : "CONTINUE →"}
           </button>
         </div>
       </div>

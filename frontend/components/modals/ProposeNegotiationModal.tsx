@@ -114,7 +114,7 @@ export function ProposeNegotiationModal({ onClose, onDone }: { onClose: () => vo
             <div className="flex justify-end px-6 py-4 border-t border-white/8">
               <button disabled={submitting} onClick={handlePropose}
                 className="font-mono text-[10px] tracking-[0.08em] uppercase px-5.5 py-2.5 border border-white/30 cursor-pointer hover:bg-white/6 transition-colors disabled:opacity-50 disabled:cursor-wait">
-                {submitting ? "SUBMITTING (AI EVALUATING…)" : "PROPOSE & EVALUATE →"}
+                {submitting ? "CONFIRMING ON GENLAYER… (~30s)" : "PROPOSE & EVALUATE →"}
               </button>
             </div>
           </>
@@ -149,7 +149,7 @@ export function ProposeNegotiationModal({ onClose, onDone }: { onClose: () => vo
               </button>
               <button disabled={submitting} onClick={handleLock}
                 className="font-mono text-[10px] tracking-[0.08em] uppercase px-5.5 py-2.5 border border-white/30 cursor-pointer hover:bg-white/6 transition-colors disabled:opacity-50 disabled:cursor-wait">
-                {submitting ? "LOCKING…" : "LOCK GEN IN ESCROW →"}
+                {submitting ? "CONFIRMING ON GENLAYER… (~30s)" : "LOCK GEN IN ESCROW →"}
               </button>
             </div>
           </>
