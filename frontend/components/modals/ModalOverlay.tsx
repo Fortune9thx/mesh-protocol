@@ -13,7 +13,6 @@ export function ModalOverlay({ children, onClose }: { children: ReactNode; onClo
         transition={{ duration: 0.2, ease: "easeOut" }}
         className="absolute inset-0 z-20 flex items-center justify-center"
         style={{ background: "rgba(6,6,6,0.72)" }}
-        {/* Intentionally no outside-click-to-close — users lose form data */}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
