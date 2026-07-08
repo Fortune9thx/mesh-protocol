@@ -1,48 +1,43 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
-# Mesh Protocol — Escrow Vault
+# Mesh Protocol -- Escrow Vault
 # GenLayer Intelligent Contract
 # Layer 5: Settlement
 #
-# Production note: release() and resolve_dispute() use @allow_storage to read
-# NegotiationEngine state and enforce that funds can only be released against
-# an on-chain accepted negotiation. Requires NegotiationEngine deployed address
-# set as NEGOTIATION_ENGINE_ADDRESS constant before deployment.
-#
-# Current Bradbury address: 0xa5C8cd99d081145ef90dDEEC024665CaA21E86C7
+# NEGOTIATION_ENGINE_ADDRESS must be updated to the new NegotiationEngine
+# address after each redeployment. Set this before deploying EscrowVault.
 
 from genlayer import *
 
-NEGOTIATION_ENGINE_ADDRESS = Address("0xa5C8cd99d081145ef90dDEEC024665CaA21E86C7")
+# UPDATE THIS after deploying NegotiationEngine
+NEGOTIATION_ENGINE_ADDRESS = Address("0x0000000000000000000000000000000000000001")
 
 class EscrowVault(gl.Contract):
     """
     Holds funds in escrow between requester and provider.
-    Releases, refunds, or disputes based on verification result.
-    Cross-contract guard: release() verifies the corresponding negotiation
-    was accepted on NegotiationEngine before transferring funds.
+    Cross-contract guard on release(): verifies negotiation was accepted
+    on NegotiationEngine before transferring funds -- trustless enforcement.
+    Human arbitration via resolve_dispute() for contested outcomes.
     """
 
-    # escrow_id -> amount (GEN wei)
-    balances: TreeMap[str, u256]
-    # escrow_id -> payer address
-    payers: TreeMap[str, Address]
-    # escrow_id -> payee address
-    payees: TreeMap[str, Address]
-    # escrow_id -> status: locked|released|refunded|disputed
-    statuses: TreeMap[str, str]
-    # escrow_id -> intent_id
-    intent_map: TreeMap[str, str]
-    # escrow_id -> negotiation_id (set at lock time for release guard)
-    negotiation_map: TreeMap[str, str]
+    balances: TreeMap[str, u256]        # escrow_id -> amount (GEN wei)
+    payers: TreeMap[str, Address]       # escrow_id -> payer
+    payees: TreeMap[str, Address]       # escrow_id -> payee
+    statuses: TreeMap[str, str]         # escrow_id -> locked|released|refunded|disputed
+    intent_map: TreeMap[str, str]       # escrow_id -> intent_id
+    negotiation_map: TreeMap[str, str]  # escrow_id -> negotiation_id
+
+    # Enumeration index
+    escrow_count: u64
+    escrow_index: TreeMap[u64, str]     # sequential index -> escrow_id
 
     def __init__(self) -> None:
-        pass
+        self.escrow_count = u64(0)
 
     @gl.public.write.payable
     def lock(self, escrow_id: str, payee: str, intent_id: str, negotiation_id: str) -> None:
         """Lock msg.value into escrow. Called by requester after negotiation accepted."""
         assert escrow_id not in self.statuses, "Escrow already exists"
-        assert gl.message.value > 0, "Must send GEN to lock"
+        assert gl.message.value > u256(0), "Must send GEN to lock"
 
         self.balances[escrow_id] = gl.message.value
         self.payers[escrow_id] = gl.message.sender_address
@@ -51,13 +46,18 @@ class EscrowVault(gl.Contract):
         self.intent_map[escrow_id] = intent_id
         self.negotiation_map[escrow_id] = negotiation_id
 
+        # Append to enumeration index
+        idx = self.escrow_count
+        self.escrow_index[idx] = escrow_id
+        self.escrow_count = idx + u64(1)
+
     @gl.public.write
     @allow_storage(NEGOTIATION_ENGINE_ADDRESS)
     def release(self, escrow_id: str) -> None:
         """
         Release funds to payee. Called after PASS verification.
         Cross-contract guard: verifies the linked negotiation is 'accepted'
-        on NegotiationEngine before transferring — trustless enforcement.
+        on NegotiationEngine before transferring -- trustless enforcement.
         """
         assert self.statuses.get(escrow_id, "") == "locked", "Escrow not locked"
 
@@ -89,14 +89,13 @@ class EscrowVault(gl.Contract):
 
     @gl.public.write
     def dispute(self, escrow_id: str) -> None:
-        """Flag for human arbitration. Called after PARTIAL verification."""
+        """Flag for human arbitration."""
         assert self.statuses.get(escrow_id, "") == "locked", "Escrow not locked"
         self.statuses[escrow_id] = "disputed"
 
     @gl.public.write
-    @allow_storage(NEGOTIATION_ENGINE_ADDRESS)
     def resolve_dispute(self, escrow_id: str, release_to_payee: bool) -> None:
-        """Human operator resolves disputed escrow."""
+        """Human operator resolves disputed escrow via Arbitration Chamber."""
         assert self.statuses.get(escrow_id, "") == "disputed", "Not disputed"
         amount = self.balances[escrow_id]
         self.balances[escrow_id] = u256(0)
@@ -107,6 +106,29 @@ class EscrowVault(gl.Contract):
         else:
             self.statuses[escrow_id] = "refunded"
             gl.get_contract_at(self.payers[escrow_id]).emit_transfer(value=amount)
+
+    # ---- Views ----
+
+    @gl.public.view
+    def get_escrow_count(self) -> u64:
+        return self.escrow_count
+
+    @gl.public.view
+    def get_escrow_id_at(self, index: u64) -> str:
+        return self.escrow_index.get(index, "")
+
+    @gl.public.view
+    def get_escrow_data(self, escrow_id: str) -> str:
+        """Returns pipe-delimited escrow data string for frontend parsing."""
+        if escrow_id not in self.statuses:
+            return ""
+        status = self.statuses.get(escrow_id, "unknown")
+        balance = int(self.balances.get(escrow_id, u256(0)))
+        payer = self.payers[escrow_id].as_hex if escrow_id in self.payers else ""
+        payee = self.payees[escrow_id].as_hex if escrow_id in self.payees else ""
+        intent = self.intent_map.get(escrow_id, "")
+        neg = self.negotiation_map.get(escrow_id, "")
+        return f"status={status}|balance={balance}|payer={payer}|payee={payee}|intent={intent}|neg={neg}"
 
     @gl.public.view
     def get_status(self, escrow_id: str) -> str:

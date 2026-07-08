@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getAgents } from "./api";
+import { fetchAllAgents } from "./contracts";
 import type { Agent } from "./types";
 
 export function useAgents() {
@@ -10,13 +10,16 @@ export function useAgents() {
 
   const refetch = useCallback(async () => {
     setLoading(true);
-    const data = await getAgents();
-    setAgents(data ?? []);
+    const data = await fetchAllAgents();
+    setAgents((data as Agent[]).filter(Boolean));
     setLoading(false);
   }, []);
 
   useEffect(() => {
     refetch();
+    // Poll every 15s — contract reads are fast view calls, no gas
+    const id = setInterval(refetch, 15_000);
+    return () => clearInterval(id);
   }, [refetch]);
 
   return { agents, loading, refetch };

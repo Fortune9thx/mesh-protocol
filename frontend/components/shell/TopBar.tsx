@@ -10,7 +10,8 @@ const surfaceTitles: Record<View, string> = {
 };
 
 export function TopBar({ view }: { view: View }) {
-  const { address, connecting, signingIn, connect, onCorrectChain } = useWallet();
+  const { address, connecting, connect, onCorrectChain } = useWallet();
+  const signingIn = connecting;
 
   return (
     <div className="h-[72px] flex-none flex items-center justify-between px-8 border-b border-white/9 bg-graphite">

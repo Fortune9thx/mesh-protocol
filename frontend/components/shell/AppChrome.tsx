@@ -18,7 +18,7 @@ const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
 export function AppChrome() {
   const pathname = usePathname();
-  const { address, connect, disconnect, signingIn } = useWallet();
+  const { address, connect, disconnect, connecting } = useWallet();
 
   return (
     <header className="flex h-14 items-center justify-between border-b border-[#212127] px-7">
@@ -50,7 +50,7 @@ export function AppChrome() {
         ) : (
           <button onClick={connect}
             className="rounded-md border border-[#212127] px-3 py-1.5 font-mono text-[11px] text-[--mesh-white] hover:border-[#2A2A30]">
-            {signingIn ? "SIGNING…" : "CONNECT"}
+            {connecting ? "CONNECTING…" : "CONNECT"}
           </button>
         )}
       </div>

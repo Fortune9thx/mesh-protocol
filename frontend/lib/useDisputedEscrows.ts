@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getEscrows } from "./api";
+import { fetchAllEscrows } from "./contracts";
 import type { Escrow } from "./types";
 
 export function useDisputedEscrows() {
@@ -10,13 +10,17 @@ export function useDisputedEscrows() {
 
   const refetch = useCallback(async () => {
     setLoading(true);
-    const all = await getEscrows();
-    setEscrows((all ?? []).filter((e) => e.status === "disputed"));
+    const all = await fetchAllEscrows();
+    setEscrows(
+      (all as Escrow[]).filter(Boolean).filter((e) => e.status === "disputed"),
+    );
     setLoading(false);
   }, []);
 
   useEffect(() => {
     refetch();
+    const id = setInterval(refetch, 10_000);
+    return () => clearInterval(id);
   }, [refetch]);
 
   return { escrows, loading, refetch };
