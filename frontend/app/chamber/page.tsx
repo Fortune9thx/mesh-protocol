@@ -1,12 +1,11 @@
 "use client";
 
-// Surface 4 — Arbitration Chamber. Not a modal: a dedicated, ceremonial screen.
-// Two parties face each other across the evidence timeline. Judgment is a
-// press-and-hold. Nothing decorative — the stillness is the ceremony.
-
 import { Suspense, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
 import { AppChrome } from "@/components/shell/AppChrome";
+import { ProtocolStatusStrip } from "@/components/surfaces/ProtocolStatusStrip";
+import { HumanSilhouette } from "@/components/surfaces/HumanSilhouette";
 import { useDisputedEscrows } from "@/lib/useDisputedEscrows";
 import { overrideSettlement } from "@/lib/api";
 
@@ -82,18 +81,39 @@ function ChamberInner() {
     }
   };
 
+  // ── Empty state — human silhouette with message ──
   if (!escrow && !resolved) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center py-32 text-center">
-        <p className="text-[26px] font-light italic text-[#A8A7A1]" style={serif}>The chamber is empty.</p>
-        <p className="mt-3 text-[13px] text-[#6B6B74]">No open disputes. The mesh is resolving itself.</p>
+      <div className="flex flex-1 flex-col items-center justify-center py-24 text-center">
+        <div className="relative mb-8 h-48 w-32 opacity-10">
+          <HumanSilhouette opacity={1} />
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <p className="text-[28px] font-light italic text-[#A8A7A1]" style={serif}>
+            The chamber is empty.
+          </p>
+          <p className="mt-3 text-[13px] text-[#6B6B74]">
+            No open disputes. The mesh is resolving itself.
+          </p>
+          <p className="mt-1 font-mono text-[10px] tracking-[0.12em] text-[#2E2E38]">
+            HUMAN OVERSIGHT AVAILABLE · STANDING BY
+          </p>
+        </motion.div>
       </div>
     );
   }
 
+  // ── Resolved ──
   if (resolved) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center py-32 text-center">
+        <div className="relative mb-8 h-40 w-28 opacity-20">
+          <HumanSilhouette opacity={1} />
+        </div>
         <p className="text-[32px] font-light" style={serif}>
           Judgment rendered — {resolved === "released" ? "provider paid" : "requester made whole"}.
         </p>
@@ -106,16 +126,28 @@ function ChamberInner() {
   return (
     <div className="flex flex-1 flex-col"
       style={{ background: "radial-gradient(ellipse 70% 55% at 50% 38%, #131318 0%, #08080A 78%)" }}>
+
+      {/* human silhouette — prominent when judgment is required */}
+      <div className="pointer-events-none absolute right-12 top-24 h-72 w-48 opacity-[0.055]">
+        <HumanSilhouette opacity={1} />
+      </div>
+
       <div className="pt-11 text-center">
-        <div className="font-mono text-[10px] tracking-[0.18em] text-[--mesh-red]">
-          ● DISPUTE · ESCROW #{e.escrow_id.slice(0, 8).toUpperCase()} · AWAITING YOUR JUDGMENT
-        </div>
-        <h1 className="mt-3 text-[42px] font-light tracking-[-0.015em]" style={serif}>
-          {short(e.payee)} <em className="text-[#6B6B74]">vs</em> {short(e.payer)}
-        </h1>
-        <div className="mt-2.5 font-mono text-[13px] tracking-[0.1em] text-[#A8A7A1]">
-          {e.amount.toFixed(2)} GEN IN ESCROW · {e.intent_id.toUpperCase()}
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="font-mono text-[10px] tracking-[0.18em] text-[--mesh-red]">
+            ● DISPUTE · ESCROW #{e.escrow_id.slice(0, 8).toUpperCase()} · AWAITING YOUR JUDGMENT
+          </div>
+          <h1 className="mt-3 text-[42px] font-light tracking-[-0.015em]" style={serif}>
+            {short(e.payee)} <em className="text-[#6B6B74]">vs</em> {short(e.payer)}
+          </h1>
+          <div className="mt-2.5 font-mono text-[13px] tracking-[0.1em] text-[#A8A7A1]">
+            {e.amount.toFixed(2)} GEN IN ESCROW · {e.intent_id.toUpperCase()}
+          </div>
+        </motion.div>
       </div>
 
       {/* the court */}
@@ -183,8 +215,9 @@ function ChamberInner() {
 
 export default function ArbitrationChamber() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#0C0C0E] font-sans text-[14px] text-[--mesh-white]">
+    <div className="relative flex min-h-screen flex-col bg-[#0C0C0E] font-sans text-[14px] text-[--mesh-white]">
       <AppChrome />
+      <ProtocolStatusStrip />
       <Suspense>
         <ChamberInner />
       </Suspense>
