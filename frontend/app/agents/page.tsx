@@ -38,7 +38,7 @@ function AgentProfileInner() {
   if (!agent) {
     return (
       <main className="mx-auto max-w-[1180px] px-7 py-16 text-center text-[13px] text-[#6B6B74]">
-        No agents registered yet. Register one from the Command surface.
+        No agents registered yet. Connect your wallet and click <strong className="text-[#A8A7A1]">+ Agent</strong> in the header.
       </main>
     );
   }
