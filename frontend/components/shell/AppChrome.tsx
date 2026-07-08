@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useWallet } from "@/lib/WalletProvider";
 import { RegisterAgentModal } from "@/components/modals/RegisterAgentModal";
 import { SubmitIntentModal } from "@/components/modals/SubmitIntentModal";
@@ -17,11 +18,9 @@ const NAV = [
 
 type ActiveModal = "register" | "intent" | "negotiation" | null;
 
-const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
-
 export function AppChrome() {
   const pathname = usePathname();
-  const { address, connect, disconnect, connecting } = useWallet();
+  const { address } = useWallet();
   const [modal, setModal] = useState<ActiveModal>(null);
 
   return (
@@ -72,17 +71,11 @@ export function AppChrome() {
             Bradbury
           </span>
 
-          {address ? (
-            <button onClick={disconnect}
-              className="rounded-md border border-[#212127] px-3 py-1.5 font-mono text-[11px] text-[#A8A7A1] hover:border-[#2A2A30]">
-              {short(address)}
-            </button>
-          ) : (
-            <button onClick={connect}
-              className="rounded-md border border-[#212127] px-3 py-1.5 font-mono text-[11px] text-[--mesh-white] hover:border-[#2A2A30]">
-              {connecting ? "CONNECTING…" : "CONNECT"}
-            </button>
-          )}
+          <ConnectButton
+            chainStatus="none"
+            showBalance={false}
+            accountStatus="address"
+          />
         </div>
       </header>
 

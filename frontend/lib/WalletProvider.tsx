@@ -1,16 +1,9 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import {
-  BRADBURY_CHAIN,
-  ensureBradburyChain,
-  getChainId,
-  getInjectedProvider,
-  sendNativeTransfer,
-  requestAccounts,
-  type Eip1193Provider,
-} from "./wallet";
+import { createContext, useCallback, useContext, useEffect, type ReactNode } from "react";
+import { useAccount } from "wagmi";
 import { setWalletProvider } from "./api";
+import { sendNativeTransfer } from "./wallet";
 
 interface WalletState {
   address: string | null;
@@ -26,81 +19,50 @@ interface WalletState {
 const WalletContext = createContext<WalletState | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [provider, setProvider] = useState<Eip1193Provider | null>(null);
-  const [address, setAddress] = useState<string | null>(null);
-  const [chainId, setChainId] = useState<string | null>(null);
-  const [connecting, setConnecting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { address, chainId, isConnecting, connector } = useAccount();
 
+  // Wire the raw EIP-1193 provider into genlayer-js api.ts whenever the
+  // account connects or changes (wagmi connector exposes getProvider()).
   useEffect(() => {
-    setProvider(getInjectedProvider());
-  }, []);
-
-  useEffect(() => {
-    if (!provider) return;
-    const onAccountsChanged = (...args: unknown[]) => {
-      const accounts = args[0] as string[];
-      const wallet = accounts[0] ?? null;
-      setAddress(wallet);
-      if (wallet) setWalletProvider(provider, wallet);
-      else setWalletProvider(null, "");
-    };
-    const onChainChanged = (...args: unknown[]) => setChainId(args[0] as string);
-    provider.on("accountsChanged", onAccountsChanged);
-    provider.on("chainChanged", onChainChanged);
-    return () => {
-      provider.removeListener("accountsChanged", onAccountsChanged);
-      provider.removeListener("chainChanged", onChainChanged);
-    };
-  }, [provider]);
-
-  /**
-   * Connect flow (no backend JWT required -- pure on-chain):
-   *   1. eth_requestAccounts -- MetaMask popup
-   *   2. wallet_switchEthereumChain -- ensure Bradbury
-   *   3. Wire provider + address into api.ts for write calls
-   */
-  const connect = useCallback(async () => {
-    if (!provider) {
-      setError("No wallet extension detected. Install MetaMask to continue.");
-      return;
+    if (address && connector) {
+      connector.getProvider().then((provider) => {
+        setWalletProvider(provider, address);
+      }).catch(console.error);
+    } else {
+      setWalletProvider(null, "");
     }
-    setConnecting(true);
-    setError(null);
-    try {
-      const accounts = await requestAccounts(provider);
-      const wallet = accounts[0];
-      if (!wallet) throw new Error("No account returned from wallet");
-
-      await ensureBradburyChain(provider);
-      setChainId(await getChainId(provider));
-      setAddress(wallet);
-      setWalletProvider(provider, wallet);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to connect wallet");
-    } finally {
-      setConnecting(false);
-    }
-  }, [provider]);
-
-  const disconnect = useCallback(() => {
-    setAddress(null);
-    setWalletProvider(null, "");
-  }, []);
+  }, [address, connector]);
 
   const sendGen = useCallback(
     async (to: string, amountGen: string) => {
-      if (!provider || !address) throw new Error("Wallet not connected");
+      if (!address || !connector) throw new Error("Wallet not connected");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const provider = await connector.getProvider() as any;
       return sendNativeTransfer(provider, address, to, amountGen);
     },
-    [provider, address],
+    [address, connector],
   );
 
-  const onCorrectChain = chainId === BRADBURY_CHAIN.chainIdHex;
+  // connect/disconnect are handled by the RainbowKit ConnectButton modal.
+  // These stubs keep the WalletContext interface stable for components that
+  // still reference them (e.g. FundWalletModal).
+  const connect = useCallback(async () => {}, []);
+  const disconnect = useCallback(() => { setWalletProvider(null, ""); }, []);
+
+  const onCorrectChain = chainId === 4221;
 
   return (
     <WalletContext.Provider
-      value={{ address, chainId, connecting, error, onCorrectChain, connect, disconnect, sendGen }}
+      value={{
+        address: address ?? null,
+        chainId: chainId ? `0x${chainId.toString(16)}` : null,
+        connecting: isConnecting,
+        error: null,
+        onCorrectChain,
+        connect,
+        disconnect,
+        sendGen,
+      }}
     >
       {children}
     </WalletContext.Provider>
