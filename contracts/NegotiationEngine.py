@@ -25,12 +25,12 @@ class NegotiationEngine(gl.Contract):
     intent_map: TreeMap[str, str]       # negotiation_id -> intent_id
     ai_verdicts: TreeMap[str, str]      # negotiation_id -> raw AI verdict
 
-    # Enumeration index
-    neg_count: u64
-    neg_index: TreeMap[u64, str]        # sequential index -> negotiation_id
+    # Enumeration index (DynArray not supported; TreeMap key must be str)
+    neg_count: u256
+    neg_index: TreeMap[str, str]        # str(index) -> negotiation_id
 
     def __init__(self) -> None:
-        self.neg_count = u64(0)
+        self.neg_count = u256(0)
 
     # ---- Helper (must be defined before callers per GenVM static analyser) ----
 
@@ -109,8 +109,8 @@ class NegotiationEngine(gl.Contract):
 
         # Append to enumeration index
         idx = self.neg_count
-        self.neg_index[idx] = negotiation_id
-        self.neg_count = idx + u64(1)
+        self.neg_index[str(int(idx))] = negotiation_id
+        self.neg_count = idx + u256(1)
 
         # Apply AI verdict to storage
         self._apply_verdict(negotiation_id, str(verdict), proposed_price)
@@ -134,8 +134,8 @@ class NegotiationEngine(gl.Contract):
         self.ai_verdicts[negotiation_id] = "manual"
 
         idx = self.neg_count
-        self.neg_index[idx] = negotiation_id
-        self.neg_count = idx + u64(1)
+        self.neg_index[str(int(idx))] = negotiation_id
+        self.neg_count = idx + u256(1)
 
     @gl.public.write
     def accept(self, negotiation_id: str, final_price: u256) -> None:
@@ -151,12 +151,12 @@ class NegotiationEngine(gl.Contract):
     # ---- Views ----
 
     @gl.public.view
-    def get_neg_count(self) -> u64:
+    def get_neg_count(self) -> u256:
         return self.neg_count
 
     @gl.public.view
-    def get_neg_id_at(self, index: u64) -> str:
-        return self.neg_index.get(index, "")
+    def get_neg_id_at(self, index: u256) -> str:
+        return self.neg_index.get(str(int(index)), "")
 
     @gl.public.view
     def get_negotiation_data(self, negotiation_id: str) -> str:

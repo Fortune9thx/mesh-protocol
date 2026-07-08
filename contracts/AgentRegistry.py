@@ -22,12 +22,12 @@ class AgentRegistry(gl.Contract):
     spending_limits: TreeMap[str, u256]     # agent_id -> limit in GEN wei
     autonomy_levels: TreeMap[str, u64]      # agent_id -> 0-3
 
-    # Enumeration index (DynArray not supported on Bradbury -- use TreeMap counter)
-    agent_count: u64
-    agent_index: TreeMap[u64, str]          # sequential index -> agent_id
+    # Enumeration index (DynArray not supported; TreeMap key must be str)
+    agent_count: u256
+    agent_index: TreeMap[str, str]          # str(index) -> agent_id
 
     def __init__(self) -> None:
-        self.agent_count = u64(0)
+        self.agent_count = u256(0)
 
     @gl.public.write
     def register_agent(
@@ -56,8 +56,8 @@ class AgentRegistry(gl.Contract):
 
         # Append to enumeration index
         idx = self.agent_count
-        self.agent_index[idx] = agent_id
-        self.agent_count = idx + u64(1)
+        self.agent_index[str(int(idx))] = agent_id
+        self.agent_count = idx + u256(1)
 
     @gl.public.write
     def update_agent(self, agent_id: str, new_spending_limit: u256, new_pricing_model: str) -> None:
@@ -87,12 +87,12 @@ class AgentRegistry(gl.Contract):
     # ---- Views ----
 
     @gl.public.view
-    def get_agent_count(self) -> u64:
+    def get_agent_count(self) -> u256:
         return self.agent_count
 
     @gl.public.view
-    def get_agent_id_at(self, index: u64) -> str:
-        return self.agent_index.get(index, "")
+    def get_agent_id_at(self, index: u256) -> str:
+        return self.agent_index.get(str(int(index)), "")
 
     @gl.public.view
     def get_agent_data(self, agent_id: str) -> str:

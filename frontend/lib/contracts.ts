@@ -13,11 +13,11 @@
 
 // ── Contract addresses (update after each redeploy) ──────────────────────────
 export const CONTRACT_ADDRESSES = {
-  AgentRegistry:     "0xB31900eE7fa37E7e8a2cd49212125e49efdBEa2c" as `0x${string}`,
-  IntentRegistry:    "0x4a2CB695c015F4198627135249a093425a5080e8" as `0x${string}`,
-  NegotiationEngine: "0xa5C8cd99d081145ef90dDEEC024665CaA21E86C7" as `0x${string}`,
-  EscrowVault:       "0x7Db590E16F1F2E40d0859379b2706fc539db5d65" as `0x${string}`,
-  ReputationLedger:  "0xfA8912C4AA206DdAD7496Cf3df5B6A64AF1e5982" as `0x${string}`,
+  AgentRegistry:     "0xED1955e0A76de84A0dEA63149524CA8Ea75D69d4" as `0x${string}`,
+  IntentRegistry:    "0xf5Ba55803aB897abf0aBB5ab366012e1EDdC1db2" as `0x${string}`,
+  NegotiationEngine: "0x2F6cba483F933aB2eEe0Fa2F69b9d511258A6172" as `0x${string}`,
+  EscrowVault:       "0x596C8a2e952f0D4f733436F5A84c4B1dD851D6cb" as `0x${string}`,
+  ReputationLedger:  "0x1a6c8BbbF63AC1a6436D3fC9530472Af185d3Ccc" as `0x${string}`,
 } as const;
 
 type ContractName = keyof typeof CONTRACT_ADDRESSES;
@@ -105,7 +105,7 @@ export async function fetchAgentCount(): Promise<number> {
 }
 
 export async function fetchAgentIdAt(index: number): Promise<string> {
-  return (await readContract("AgentRegistry", "get_agent_id_at", [index])) as string ?? "";
+  return (await readContract("AgentRegistry", "get_agent_id_at", [BigInt(index)])) as string ?? "";
 }
 
 export async function fetchAgentData(agentId: string) {
@@ -148,7 +148,7 @@ export async function fetchEscrowCount(): Promise<number> {
 }
 
 export async function fetchEscrowIdAt(index: number): Promise<string> {
-  return (await readContract("EscrowVault", "get_escrow_id_at", [index])) as string ?? "";
+  return (await readContract("EscrowVault", "get_escrow_id_at", [BigInt(index)])) as string ?? "";
 }
 
 export async function fetchEscrowData(escrowId: string) {
@@ -185,7 +185,7 @@ export async function fetchIntentCount(): Promise<number> {
 }
 
 export async function fetchIntentIdAt(index: number): Promise<string> {
-  return (await readContract("IntentRegistry", "get_intent_id_at", [index])) as string ?? "";
+  return (await readContract("IntentRegistry", "get_intent_id_at", [BigInt(index)])) as string ?? "";
 }
 
 export async function fetchIntentData(intentId: string) {

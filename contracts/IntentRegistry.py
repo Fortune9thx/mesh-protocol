@@ -22,12 +22,12 @@ class IntentRegistry(gl.Contract):
     requirements_map: TreeMap[str, str]     # intent_id -> comma-separated requirements
     priorities: TreeMap[str, str]           # intent_id -> low|medium|high|critical
 
-    # Enumeration index
-    intent_count: u64
-    intent_index: TreeMap[u64, str]         # sequential index -> intent_id
+    # Enumeration index (DynArray not supported; TreeMap key must be str)
+    intent_count: u256
+    intent_index: TreeMap[str, str]         # str(index) -> intent_id
 
     def __init__(self) -> None:
-        self.intent_count = u64(0)
+        self.intent_count = u256(0)
 
     @gl.public.write
     def submit_intent(
@@ -55,8 +55,8 @@ class IntentRegistry(gl.Contract):
 
         # Append to enumeration index
         idx = self.intent_count
-        self.intent_index[idx] = intent_id
-        self.intent_count = idx + u64(1)
+        self.intent_index[str(int(idx))] = intent_id
+        self.intent_count = idx + u256(1)
 
     @gl.public.write
     def update_status(self, intent_id: str, new_status: str) -> None:
@@ -75,12 +75,12 @@ class IntentRegistry(gl.Contract):
     # ---- Views ----
 
     @gl.public.view
-    def get_intent_count(self) -> u64:
+    def get_intent_count(self) -> u256:
         return self.intent_count
 
     @gl.public.view
-    def get_intent_id_at(self, index: u64) -> str:
-        return self.intent_index.get(index, "")
+    def get_intent_id_at(self, index: u256) -> str:
+        return self.intent_index.get(str(int(index)), "")
 
     @gl.public.view
     def get_intent_data(self, intent_id: str) -> str:

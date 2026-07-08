@@ -54,9 +54,27 @@ async function deployContract(name, codePath) {
   try {
     const tx = await client.deployContract({ code, args: [], leaderOnly: false });
     console.log(`  tx: ${tx}`);
-    const receipt = await client.waitForTransactionReceipt({ hash: tx, status: "FINALIZED" });
-    const address = receipt?.data?.contract_address ?? receipt?.contractAddress ?? "UNKNOWN";
+
+    // Wait for ACCEPTED (leaders agreed), then extract contract address
+    const receipt = await client.waitForTransactionReceipt({ hash: tx, status: "ACCEPTED" });
+
+    // genlayer-js receipt: contractAddress lives in txDataDecoded
+    const address =
+      receipt?.txDataDecoded?.contractAddress ??
+      receipt?.data?.contract_address ??
+      receipt?.contractAddress ??
+      receipt?.contract_address ??
+      "UNKNOWN";
+
+    if (address === "UNKNOWN") {
+      const safeStr = JSON.stringify(receipt, (_, v) => typeof v === "bigint" ? v.toString() : v, 2);
+      console.log(`  receipt dump:`, safeStr);
+    }
+
     console.log(`  ${name}: ${address}`);
+
+    // Brief pause between deploys to avoid nonce collisions
+    await new Promise((r) => setTimeout(r, 3000));
     return address;
   } catch (err) {
     console.error(`  FAILED: ${err.message}`);

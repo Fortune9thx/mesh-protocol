@@ -9,7 +9,7 @@
 from genlayer import *
 
 # UPDATE THIS after deploying NegotiationEngine
-NEGOTIATION_ENGINE_ADDRESS = Address("0x0000000000000000000000000000000000000001")
+NEGOTIATION_ENGINE_ADDRESS = Address("UNKNOWN")
 
 class EscrowVault(gl.Contract):
     """
@@ -26,12 +26,12 @@ class EscrowVault(gl.Contract):
     intent_map: TreeMap[str, str]       # escrow_id -> intent_id
     negotiation_map: TreeMap[str, str]  # escrow_id -> negotiation_id
 
-    # Enumeration index
-    escrow_count: u64
-    escrow_index: TreeMap[u64, str]     # sequential index -> escrow_id
+    # Enumeration index (DynArray not supported; TreeMap key must be str)
+    escrow_count: u256
+    escrow_index: TreeMap[str, str]     # str(index) -> escrow_id
 
     def __init__(self) -> None:
-        self.escrow_count = u64(0)
+        self.escrow_count = u256(0)
 
     @gl.public.write.payable
     def lock(self, escrow_id: str, payee: str, intent_id: str, negotiation_id: str) -> None:
@@ -48,8 +48,8 @@ class EscrowVault(gl.Contract):
 
         # Append to enumeration index
         idx = self.escrow_count
-        self.escrow_index[idx] = escrow_id
-        self.escrow_count = idx + u64(1)
+        self.escrow_index[str(int(idx))] = escrow_id
+        self.escrow_count = idx + u256(1)
 
     @gl.public.write
     @allow_storage(NEGOTIATION_ENGINE_ADDRESS)
@@ -110,12 +110,12 @@ class EscrowVault(gl.Contract):
     # ---- Views ----
 
     @gl.public.view
-    def get_escrow_count(self) -> u64:
+    def get_escrow_count(self) -> u256:
         return self.escrow_count
 
     @gl.public.view
-    def get_escrow_id_at(self, index: u64) -> str:
-        return self.escrow_index.get(index, "")
+    def get_escrow_id_at(self, index: u256) -> str:
+        return self.escrow_index.get(str(int(index)), "")
 
     @gl.public.view
     def get_escrow_data(self, escrow_id: str) -> str:
