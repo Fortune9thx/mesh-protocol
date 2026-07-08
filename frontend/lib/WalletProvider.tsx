@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, type ReactNode } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
 import { setWalletProvider } from "./api";
 import { sendNativeTransfer } from "./wallet";
 
@@ -20,6 +20,7 @@ const WalletContext = createContext<WalletState | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const { address, chainId, isConnecting, connector } = useAccount();
+  const { disconnect: wagmiDisconnect } = useDisconnect();
 
   // Wire the raw EIP-1193 provider into genlayer-js api.ts whenever the
   // account connects or changes (wagmi connector exposes getProvider()).
@@ -47,7 +48,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   // These stubs keep the WalletContext interface stable for components that
   // still reference them (e.g. FundWalletModal).
   const connect = useCallback(async () => {}, []);
-  const disconnect = useCallback(() => { setWalletProvider(null, ""); }, []);
+  const disconnect = useCallback(() => {
+    wagmiDisconnect();
+    setWalletProvider(null, "");
+  }, [wagmiDisconnect]);
 
   const onCorrectChain = chainId === 4221;
 
