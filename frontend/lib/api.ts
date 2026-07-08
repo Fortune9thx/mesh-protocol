@@ -206,6 +206,32 @@ export async function proposeNegotiation(payload: {
     : { ok: false, status: 500, data: null, error: result.error };
 }
 
+// ── Escrow lock (payable — sends real GEN) ───────────────────────────────────
+
+export async function lockEscrow(payload: {
+  escrowId: string;
+  payee: string;
+  intentId: string;
+  negotiationId: string;
+  amountGen: number;
+}) {
+  const err = requireWallet();
+  if (err) return { ...err, status: 401, data: null };
+
+  const valueWei = BigInt(Math.round(payload.amountGen * 1e18));
+  const result = await writeContract(
+    _provider,
+    _address!,
+    "EscrowVault",
+    "lock",
+    [payload.escrowId, payload.payee, payload.intentId, payload.negotiationId],
+    valueWei,
+  );
+  return result.ok
+    ? { ok: true, status: 200, data: { escrow_id: payload.escrowId } }
+    : { ok: false, status: 500, data: null, error: result.error };
+}
+
 // ── Legacy stubs (kept so components don't need changes) ──────────────────────
 
 export function getAgents() { return Promise.resolve(null); }

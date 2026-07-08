@@ -9,7 +9,7 @@
 from genlayer import *
 
 # UPDATE THIS after deploying NegotiationEngine
-NEGOTIATION_ENGINE_ADDRESS = Address("UNKNOWN")
+NEGOTIATION_ENGINE_ADDRESS = Address("0x2F6cba483F933aB2eEe0Fa2F69b9d511258A6172")
 
 class EscrowVault(gl.Contract):
     """
