@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+/* ── GT Sectra (trial — swap to licensed files before public launch) ── */
+@font-face { font-family: "GT Sectra Display"; src: url("/fonts/GT-Sectra-Display-Light-Trial.woff2") format("woff2"); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Sectra Display"; src: url("/fonts/GT-Sectra-Display-Light-Italic-Trial.woff2") format("woff2"); font-weight: 300; font-style: italic; font-display: swap; }
+@font-face { font-family: "GT Sectra Display"; src: url("/fonts/GT-Sectra-Display-Regular-Trial.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Sectra Display"; src: url("/fonts/GT-Sectra-Display-Regular-Italic-Trial.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "GT Sectra Display"; src: url("/fonts/GT-Sectra-Display-Medium-Trial.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Sectra Fine"; src: url("/fonts/GT-Sectra-Fine-Book-Trial.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Sectra Fine"; src: url("/fonts/GT-Sectra-Fine-Book-Italic-Trial.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+
+:root {
+  /* ── Mesh design tokens (docs/DESIGN.md §2) ── */
+  --mesh-white: #FAFAF7;
+  --mesh-black: #0A0A0B;
+  --mesh-void: #050506;
+  --mesh-ink: #16161A;
+  --mesh-paper: #F2F1EC;
+  --mesh-g1: #E5E4DF;
+  --mesh-g2: #A8A7A1;
+  --mesh-g3: #55555C;
+  --mesh-g4: #2A2A30;
+  --mesh-blue: #2E5CFF;
+  --mesh-blue-dim: #1D3AA8;
+  --mesh-red: #E23D2E;
+  --mesh-red-dim: #8F2118;
+  --font-serif-display: "GT Sectra Display", Georgia, serif;
+  --font-serif-text: "GT Sectra Fine", Georgia, serif;
+
+  --color-obsidian: #0a0a0a;
+  --color-graphite: #0d0d0d;
+  --color-titanium: #151515;
+  --color-bone: #ececea;
+  --color-signal: oklch(78% 0.07 245);
+  --color-rust: oklch(55% 0.1 30);
+}
+
+@theme inline {
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), monospace;
+
+  --color-obsidian: #0a0a0a;
+  --color-graphite: #0d0d0d;
+  --color-titanium: #151515;
+  --color-bone: #ececea;
+  --color-signal: oklch(78% 0.07 245);
+  --color-rust: oklch(55% 0.1 30);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-obsidian);
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: rgba(236, 236, 234, 0.2);
+}
+
+/* ── Landing: protocol acts (stacked, scrub-swapped) ── */
+.sec-protocol .act {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-58%) translateX(0);
+  opacity: 0;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  pointer-events: none;
+}
+.sec-protocol .act.act-on {
+  opacity: 1;
+  transform: translateY(-58%);
+}
+.act-step {
+  border-bottom: 1px solid transparent;
+  transition: color 0.3s, border-color 0.3s;
+}
+.act-step.step-on {
+  color: var(--mesh-white);
+  border-color: var(--mesh-blue);
+}
+
+@keyframes dashFlow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+@keyframes fractureJitter {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(0.6px, -0.8px);
+  }
+  50% {
+    transform: translate(-0.7px, 0.5px);
+  }
+  75% {
+    transform: translate(0.4px, 0.9px);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes tickerScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.font-mono-label {
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

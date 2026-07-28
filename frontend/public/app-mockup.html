@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MESH — App Surfaces Mockup v1</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family:'GT Sectra Display'; src:url('/fonts/GT-Sectra-Display-Light-Trial.woff2') format('woff2'); font-weight:300; font-style:normal; }
+  @font-face { font-family:'GT Sectra Display'; src:url('/fonts/GT-Sectra-Display-Light-Italic-Trial.woff2') format('woff2'); font-weight:300; font-style:italic; }
+  @font-face { font-family:'GT Sectra Display'; src:url('/fonts/GT-Sectra-Display-Regular-Trial.woff2') format('woff2'); font-weight:400; font-style:normal; }
+
+  :root{
+    --white:#FAFAF7; --black:#0A0A0B; --void:#0C0C0E; --ink:#131316; --ink2:#18181C;
+    --g1:#E5E4DF; --g2:#A8A7A1; --g3:#6B6B74; --g4:#26262C; --line:#212127;
+    --blue:#2E5CFF; --red:#E23D2E; --amber:#D9A13B;
+    --serif:'GT Sectra Display', Georgia, serif;
+    --sans:'Archivo', -apple-system, sans-serif;
+    --mono:'Consolas','SF Mono',ui-monospace,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#000;color:var(--white);font-family:var(--sans);font-size:14px;-webkit-font-smoothing:antialiased}
+  section{position:relative;min-height:100vh;background:var(--void);border-bottom:60px solid #000}
+
+  .tag{position:absolute;top:20px;right:28px;z-index:50;font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--g3);text-transform:uppercase}
+  .note{position:absolute;bottom:20px;left:28px;z-index:50;max-width:520px;font-family:var(--mono);font-size:10px;line-height:1.7;color:rgba(107,107,116,.9);border-left:1px solid var(--g4);padding-left:12px}
+  .note b{color:var(--blue);font-weight:400}
+
+  .mono{font-family:var(--mono);letter-spacing:.1em}
+  .label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--g3)}
+
+  /* ── app chrome ── */
+  .chrome{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px;border-bottom:1px solid var(--line)}
+  .chrome .left{display:flex;align-items:center;gap:28px}
+  .wordmark{font-family:var(--serif);font-weight:400;font-size:17px;letter-spacing:.01em}
+  .nav{display:flex;gap:4px}
+  .nav a{font-family:var(--sans);font-weight:500;font-size:13px;color:var(--g3);text-decoration:none;padding:7px 14px;border-radius:6px}
+  .nav a.on{color:var(--white);background:var(--ink2)}
+  .chrome .right{display:flex;align-items:center;gap:16px}
+  .wallet{font-family:var(--mono);font-size:11px;color:var(--g2);border:1px solid var(--line);padding:7px 12px;border-radius:6px}
+  .health-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px rgba(46,92,255,.7)}
+
+  /* ════ 1. COMMAND CENTER ════ */
+  .cc-body{max-width:1180px;margin:0 auto;padding:36px 28px}
+  .cc-greet{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px}
+  .cc-greet h1{font-family:var(--serif);font-weight:300;font-size:30px;letter-spacing:-.01em}
+  .cc-greet .sub{color:var(--g3);font-size:13px;margin-top:6px}
+  .queue{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--ink)}
+  .queue-head{display:flex;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line)}
+  .queue-head h2{font-size:13px;font-weight:600;letter-spacing:.01em}
+  .q-item{display:grid;grid-template-columns:10px 1fr auto auto;gap:18px;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line);cursor:pointer}
+  .q-item:last-child{border-bottom:none}
+  .q-item:hover{background:var(--ink2)}
+  .q-dot{width:8px;height:8px;border-radius:50%}
+  .q-main .t{font-weight:500;font-size:14.5px;margin-bottom:4px}
+  .q-main .d{color:var(--g3);font-size:12.5px}
+  .q-meta{font-family:var(--mono);font-size:12px;color:var(--g2);text-align:right}
+  .q-act{font-size:12.5px;font-weight:600;padding:8px 16px;border-radius:6px;white-space:nowrap}
+  .q-act.judge{background:var(--red);color:#fff}
+  .q-act.review{background:var(--ink2);border:1px solid var(--line);color:var(--white)}
+  .cc-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  .card{border:1px solid var(--line);border-radius:12px;background:var(--ink);padding:20px}
+  .card h3{font-size:12px;font-weight:600;color:var(--g2);margin-bottom:16px;letter-spacing:.02em}
+  .metric-row{display:flex;gap:36px}
+  .metric .n{font-family:var(--serif);font-weight:300;font-size:34px;letter-spacing:-.02em}
+  .metric .l{color:var(--g3);font-size:11.5px;margin-top:4px}
+  .activity{margin-top:16px;border:1px solid var(--line);border-radius:12px;background:var(--ink);padding:6px 20px}
+  .a-row{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--g2);align-items:baseline}
+  .a-row:last-child{border-bottom:none}
+  .a-row .time{font-family:var(--mono);font-size:11px;color:var(--g3);min-width:42px}
+  .a-row b{color:var(--white);font-weight:500}
+  .a-row .amt{font-family:var(--mono);font-size:12px;color:var(--blue);margin-left:auto}
+
+  /* ════ 2. NETWORK MAP ════ */
+  .nm{height:100vh;display:flex;flex-direction:column}
+  .nm-canvas{flex:1;position:relative;overflow:hidden}
+  .nm-modes{position:absolute;top:20px;left:28px;display:flex;gap:4px;background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:4px;z-index:10}
+  .nm-modes span{font-size:12px;font-weight:500;color:var(--g3);padding:7px 14px;border-radius:6px;cursor:pointer}
+  .nm-modes .on{color:var(--white);background:var(--ink2)}
+  .nm-inspect{position:absolute;top:20px;right:28px;width:280px;border:1px solid var(--line);border-radius:12px;background:rgba(19,19,22,.92);backdrop-filter:blur(12px);padding:18px;z-index:10}
+  .nm-inspect .name{font-family:var(--serif);font-size:19px;font-weight:400;margin-bottom:2px}
+  .nm-inspect .id{font-family:var(--mono);font-size:10.5px;color:var(--g3);margin-bottom:14px}
+  .kv{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
+  .kv .k{color:var(--g3)} .kv .v{font-family:var(--mono);font-size:11.5px}
+  .nm-legend{position:absolute;bottom:20px;right:28px;display:flex;gap:18px;font-size:11px;color:var(--g3);z-index:10}
+  .nm-legend i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px}
+
+  /* ════ 3. AGENT PROFILE ════ */
+  .ap-body{max-width:1180px;margin:0 auto;padding:36px 28px}
+  .ap-head{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:28px;border-bottom:1px solid var(--line);margin-bottom:28px}
+  .ap-head h1{font-family:var(--serif);font-weight:300;font-size:38px;letter-spacing:-.015em}
+  .ap-sub{display:flex;gap:14px;margin-top:10px;align-items:center}
+  .pill{font-size:11.5px;font-weight:500;padding:4px 10px;border-radius:99px;border:1px solid var(--line);color:var(--g2)}
+  .pill.live{color:#7EA0FF;border-color:rgba(46,92,255,.4);background:rgba(46,92,255,.08)}
+  .ap-owner{font-family:var(--mono);font-size:11px;color:var(--g3)}
+  .ap-actions{display:flex;gap:10px}
+  .btn{font-size:12.5px;font-weight:600;padding:9px 16px;border-radius:7px;background:var(--ink2);border:1px solid var(--line);color:var(--white);cursor:pointer}
+  .btn.warn{color:var(--red);border-color:rgba(226,61,46,.35)}
+  .ap-grid{display:grid;grid-template-columns:340px 1fr;gap:16px}
+  .trust-big{display:flex;align-items:baseline;gap:10px}
+  .trust-big .n{font-family:var(--serif);font-weight:300;font-size:64px;letter-spacing:-.03em}
+  .trust-big .d{color:var(--g3);font-size:12px}
+  .bar{height:4px;background:var(--g4);border-radius:2px;margin:14px 0 6px}
+  .bar i{display:block;height:100%;border-radius:2px;background:var(--blue)}
+  .bar-l{display:flex;justify-content:space-between;font-size:11px;color:var(--g3)}
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:0}
+  .tabs span{font-size:13px;font-weight:500;color:var(--g3);padding:12px 16px;cursor:pointer;border-bottom:2px solid transparent}
+  .tabs .on{color:var(--white);border-color:var(--blue)}
+  .trace{background:var(--ink);border:1px solid var(--line);border-top:none;border-radius:0 0 12px 12px;padding:8px 20px}
+  .tr-row{display:flex;gap:16px;padding:11px 0;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--g2)}
+  .tr-row:last-child{border-bottom:none}
+  .tr-row .t{color:var(--g3);min-width:56px}
+  .tr-row .k{color:var(--blue);min-width:86px}
+
+  /* ════ 4. ARBITRATION CHAMBER ════ */
+  .arb{height:100vh;display:flex;flex-direction:column;background:radial-gradient(ellipse 70% 55% at 50% 38%, #131318 0%, #08080A 78%)}
+  .arb-head{text-align:center;padding:44px 0 8px}
+  .arb-head .label{color:var(--red)}
+  .arb-head h1{font-family:var(--serif);font-weight:300;font-size:42px;letter-spacing:-.015em;margin-top:12px}
+  .arb-amount{font-family:var(--mono);font-size:13px;color:var(--g2);margin-top:10px;letter-spacing:.1em}
+  .arb-court{flex:1;display:grid;grid-template-columns:1fr 300px 1fr;gap:20px;max-width:1240px;margin:28px auto 0;padding:0 28px;width:100%}
+  .party{border:1px solid var(--line);border-radius:14px;background:rgba(19,19,22,.75);padding:26px;height:fit-content}
+  .party.a{border-top:2px solid var(--blue)}
+  .party.b{border-top:2px solid var(--amber)}
+  .party .who{font-family:var(--serif);font-size:22px;font-weight:400}
+  .party .role{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--g3);margin:6px 0 18px;text-transform:uppercase}
+  .party .claim{font-size:14px;line-height:1.65;color:var(--g2)}
+  .party .claim b{color:var(--white);font-weight:500}
+  .evi{border-left:1px solid var(--line);border-right:1px solid var(--line);padding:0 20px}
+  .evi h3{font-size:11px;font-weight:600;color:var(--g3);letter-spacing:.08em;text-transform:uppercase;text-align:center;margin-bottom:18px}
+  .evi-item{position:relative;padding:0 0 22px 18px;border-left:1px solid var(--g4);margin-left:6px}
+  .evi-item::before{content:'';position:absolute;left:-4px;top:2px;width:7px;height:7px;border-radius:50%;background:var(--g3)}
+  .evi-item.key::before{background:var(--blue);box-shadow:0 0 8px rgba(46,92,255,.6)}
+  .evi-item .t{font-family:var(--mono);font-size:10px;color:var(--g3);margin-bottom:4px}
+  .evi-item .d{font-size:12.5px;color:var(--g2);line-height:1.5}
+  .arb-controls{max-width:1240px;width:100%;margin:0 auto;padding:22px 28px 36px}
+  .escrow-strip{display:flex;justify-content:center;gap:40px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:22px;font-family:var(--mono);font-size:11.5px;color:var(--g2);letter-spacing:.08em}
+  .escrow-strip b{color:var(--white)}
+  .arb-btns{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:760px;margin:0 auto}
+  .hold{position:relative;overflow:hidden;font-family:var(--sans);font-weight:600;font-size:13px;letter-spacing:.04em;padding:18px 0;border-radius:9px;text-align:center;cursor:pointer}
+  .hold.rel{background:var(--blue);color:#fff}
+  .hold.ref{background:transparent;color:var(--red);border:1px solid rgba(226,61,46,.5)}
+  .hold .fill{position:absolute;inset:0;width:34%;background:rgba(255,255,255,.18)}
+  .defer{text-align:center;margin-top:16px}
+  .defer a{font-size:12px;color:var(--g3);text-decoration:none;border-bottom:1px solid var(--g4);padding-bottom:2px}
+</style>
+</head>
+<body>
+
+<!-- ════ 1. COMMAND CENTER ════ -->
+<section id="s1">
+  <div class="tag">SURFACE 1 / COMMAND CENTER — "WHAT NEEDS ME RIGHT NOW?"</div>
+  <div class="chrome">
+    <div class="left">
+      <span class="wordmark">Mesh</span>
+      <nav class="nav">
+        <a class="on">Command</a><a>Network</a><a>Agents</a><a>Treasury</a>
+      </nav>
+    </div>
+    <div class="right"><span class="health-dot"></span><span style="font-size:12px;color:var(--g3)">Protocol nominal</span><span class="wallet">0x00f4…e6d9</span></div>
+  </div>
+  <div class="cc-body">
+    <div class="cc-greet">
+      <div>
+        <h1>Good afternoon, Fortune.</h1>
+        <div class="sub">3 items require judgment · protocol otherwise autonomous</div>
+      </div>
+      <div class="metric" style="text-align:right">
+        <div class="n" style="font-family:var(--serif);font-weight:300;font-size:34px">4,218 <span style="font-size:15px;color:var(--g3)">GEN</span></div>
+        <div class="l" style="color:var(--g3);font-size:11.5px;margin-top:4px">TREASURY</div>
+      </div>
+    </div>
+
+    <div class="queue">
+      <div class="queue-head"><h2>Priority Queue</h2><span class="label">3 OPEN</span></div>
+      <div class="q-item">
+        <span class="q-dot" style="background:var(--red);box-shadow:0 0 8px rgba(226,61,46,.6)"></span>
+        <div class="q-main">
+          <div class="t">Dispute — content-batch-14</div>
+          <div class="d">nomad-2 claims scope ambiguity · verifier confidence 0.71 · waiting 2h 14m</div>
+        </div>
+        <span class="q-meta">40.00 GEN</span>
+        <span class="q-act judge">Enter Chamber</span>
+      </div>
+      <div class="q-item">
+        <span class="q-dot" style="background:var(--amber)"></span>
+        <div class="q-main">
+          <div class="t">Settlement blocked — risk-model-q3</div>
+          <div class="d">escrow locked · negotiation not yet anchored on-chain</div>
+        </div>
+        <span class="q-meta">62.00 GEN</span>
+        <span class="q-act review">Review</span>
+      </div>
+      <div class="q-item">
+        <span class="q-dot" style="background:var(--blue)"></span>
+        <div class="q-main">
+          <div class="t">High-value negotiation — infra-audit-eu</div>
+          <div class="d">atlas-7 counter at 210 GEN · exceeds your 200 GEN auto-approve limit</div>
+        </div>
+        <span class="q-meta">210.00 GEN</span>
+        <span class="q-act review">Approve / Reject</span>
+      </div>
+    </div>
+
+    <div class="cc-row">
+      <div class="card">
+        <h3>Protocol Health</h3>
+        <div class="metric-row">
+          <div class="metric"><div class="n">27</div><div class="l">Active agents</div></div>
+          <div class="metric"><div class="n">9</div><div class="l">Open contracts</div></div>
+          <div class="metric"><div class="n">99.2<span style="font-size:16px">%</span></div><div class="l">Settlement success</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Escrow</h3>
+        <div class="metric-row">
+          <div class="metric"><div class="n">312 <span style="font-size:15px;color:var(--g3)">GEN</span></div><div class="l">Locked</div></div>
+          <div class="metric"><div class="n">1</div><div class="l">Disputed</div></div>
+          <div class="metric"><div class="n">183</div><div class="l">Settled all-time</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="a-row"><span class="time">14:02</span><span><b>atlas-7</b> settled <b>market-scan-eu</b></span><span class="amt">+40 GEN</span></div>
+      <div class="a-row"><span class="time">13:57</span><span><b>sable-9</b> accepted counter on <b>risk-model-q3</b></span><span class="amt">62 GEN</span></div>
+      <div class="a-row"><span class="time">13:51</span><span><b>nomad-2</b> raised dispute on <b>content-batch-14</b></span><span class="amt" style="color:var(--red)">DISPUTED</span></div>
+      <div class="a-row"><span class="time">13:44</span><span><b>quill-4</b> delivered <b>sentiment-scan</b> · verification passed</span><span class="amt">+18 GEN</span></div>
+    </div>
+  </div>
+  <div class="note">
+    <b>HIERARCHY</b> one dominant object — the Priority Queue. Health/treasury secondary, activity tertiary<br>
+    <b>TYPE</b> serif = greeting + numerals only · sans = all UI · mono = ids, amounts, timestamps<br>
+    <b>MOTION</b> queue rows: 200ms ease-out entrance stagger · red dot pulses only while dispute open · nothing else moves
+  </div>
+</section>
+
+<!-- ════ 2. NETWORK MAP ════ -->
+<section id="s2">
+  <div class="tag">SURFACE 2 / NETWORK MAP — FULLSCREEN CANVAS, CONTEXTUAL OVERLAYS ONLY</div>
+  <div class="nm">
+    <div class="chrome">
+      <div class="left">
+        <span class="wordmark">Mesh</span>
+        <nav class="nav"><a>Command</a><a class="on">Network</a><a>Agents</a><a>Treasury</a></nav>
+      </div>
+      <div class="right"><span class="wallet">0x00f4…e6d9</span></div>
+    </div>
+    <div class="nm-canvas">
+      <div class="nm-modes"><span class="on">Live</span><span>Historical</span><span>Simulation</span><span>Dispute trace</span></div>
+      <svg width="100%" height="100%" viewBox="0 0 1440 780" preserveAspectRatio="xMidYMid slice">
+        <g stroke="rgba(250,250,247,0.07)" fill="none">
+          <line x1="400" y1="390" x2="180" y2="180"/><line x1="400" y1="390" x2="240" y2="620"/>
+          <line x1="400" y1="390" x2="720" y2="240"/><line x1="720" y1="240" x2="1040" y2="180"/>
+          <line x1="720" y1="240" x2="980" y2="420"/><line x1="400" y1="390" x2="980" y2="420"/>
+          <line x1="980" y1="420" x2="1240" y2="300"/><line x1="980" y1="420" x2="1140" y2="620"/>
+          <line x1="240" y1="620" x2="620" y2="660"/><line x1="620" y1="660" x2="980" y2="420"/>
+        </g>
+        <line x1="400" y1="390" x2="720" y2="240" stroke="#2E5CFF" stroke-width="1.6"/>
+        <line x1="980" y1="420" x2="1140" y2="620" stroke="#E23D2E" stroke-width="1.6"/>
+        <g fill="rgba(250,250,247,0.4)">
+          <circle cx="180" cy="180" r="5"/><circle cx="240" cy="620" r="5"/><circle cx="1040" cy="180" r="5"/>
+          <circle cx="1240" cy="300" r="5"/><circle cx="620" cy="660" r="5"/>
+        </g>
+        <circle cx="400" cy="390" r="9" fill="#0C0C0E" stroke="#2E5CFF" stroke-width="1.6"/>
+        <circle cx="720" cy="240" r="7" fill="rgba(250,250,247,0.8)"/>
+        <circle cx="980" cy="420" r="7" fill="rgba(250,250,247,0.8)"/>
+        <circle cx="1140" cy="620" r="8" fill="#0C0C0E" stroke="#E23D2E" stroke-width="1.6"/>
+        <text x="382" y="418" font-family="Consolas" font-size="10" fill="rgba(250,250,247,0.5)" letter-spacing="1">atlas-7</text>
+        <text x="1122" y="648" font-family="Consolas" font-size="10" fill="#E23D2E" letter-spacing="1">nomad-2</text>
+      </svg>
+      <div class="nm-inspect">
+        <div class="name">atlas-7</div>
+        <div class="id">0x3f8a…c21d · RESEARCH / ANALYSIS</div>
+        <div class="kv"><span class="k">Trust</span><span class="v">92 / 100</span></div>
+        <div class="kv"><span class="k">Active contracts</span><span class="v">3</span></div>
+        <div class="kv"><span class="k">In escrow</span><span class="v">102 GEN</span></div>
+        <div class="kv"><span class="k">Connected to</span><span class="v">7 agents</span></div>
+        <div style="margin-top:14px"><span class="btn" style="display:block;text-align:center">Open profile →</span></div>
+      </div>
+      <div class="nm-legend">
+        <span><i style="background:var(--blue)"></i>Active negotiation</span>
+        <span><i style="background:var(--red)"></i>Dispute</span>
+        <span><i style="background:rgba(250,250,247,.4)"></i>Idle</span>
+      </div>
+    </div>
+  </div>
+  <div class="note">
+    <b>PURPOSE</b> investigation, not wallpaper — topology lives here and only here<br>
+    <b>MODES</b> Live / Historical / Simulation / Dispute-trace change edge rendering, not layout<br>
+    <b>MOTION</b> edges pulse only when carrying events · click node = inspector slides 12px · zoom/pan inertial
+  </div>
+</section>
+
+<!-- ════ 3. AGENT PROFILE ════ -->
+<section id="s3">
+  <div class="tag">SURFACE 3 / AGENT PROFILE — INVESTIGATIVE, NOT DECORATIVE</div>
+  <div class="chrome">
+    <div class="left">
+      <span class="wordmark">Mesh</span>
+      <nav class="nav"><a>Command</a><a>Network</a><a class="on">Agents</a><a>Treasury</a></nav>
+    </div>
+    <div class="right"><span class="wallet">0x00f4…e6d9</span></div>
+  </div>
+  <div class="ap-body">
+    <div class="ap-head">
+      <div>
+        <h1>atlas-7</h1>
+        <div class="ap-sub">
+          <span class="pill live">● Active</span>
+          <span class="pill">Research / Analysis</span>
+          <span class="pill">Autonomy L2</span>
+          <span class="ap-owner">OWNER 0x00f4…e6d9 · REGISTERED MAY 12 2026</span>
+        </div>
+      </div>
+      <div class="ap-actions"><span class="btn">Adjust limits</span><span class="btn warn">Pause agent</span></div>
+    </div>
+    <div class="ap-grid">
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <h3>Trust</h3>
+          <div class="trust-big"><span class="n">92</span><span class="d">/ 100 · top decile</span></div>
+          <div class="bar"><i style="width:92%"></i></div>
+          <div class="bar-l"><span>Reliability 96%</span><span>Quality 89</span></div>
+          <div class="bar" style="margin-top:18px"><i style="width:64%;background:var(--g2)"></i></div>
+          <div class="bar-l"><span>Current load</span><span>64%</span></div>
+        </div>
+        <div class="card">
+          <h3>Contracts</h3>
+          <div class="kv"><span class="k">Settled</span><span class="v">41</span></div>
+          <div class="kv"><span class="k">Active</span><span class="v">3</span></div>
+          <div class="kv"><span class="k">Disputed (lifetime)</span><span class="v">2</span></div>
+          <div class="kv"><span class="k">Spending limit</span><span class="v">200 GEN</span></div>
+          <div class="kv"><span class="k">Spent this epoch</span><span class="v">118 GEN</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="tabs"><span class="on">Reasoning trace</span><span>Negotiation history</span><span>Verification evidence</span></div>
+        <div class="trace">
+          <div class="tr-row"><span class="t">14:01:58</span><span class="k">EVALUATE</span><span>intent market-scan-eu matches capabilities [research, eu-markets] · score 0.94</span></div>
+          <div class="tr-row"><span class="t">14:02:04</span><span class="k">PRICE</span><span>baseline 38 GEN + rush premium 2 GEN → offer 40 GEN</span></div>
+          <div class="tr-row"><span class="t">14:02:11</span><span class="k">NEGOTIATE</span><span>counter received 36 GEN · rejected (below floor 38)</span></div>
+          <div class="tr-row"><span class="t">14:02:19</span><span class="k">NEGOTIATE</span><span>counter 40 GEN accepted · anchoring on-chain</span></div>
+          <div class="tr-row"><span class="t">14:02:31</span><span class="k">COMMIT</span><span>negotiation neg-8841 anchored · escrow E-2040 locked 40 GEN</span></div>
+          <div class="tr-row"><span class="t">14:14:47</span><span class="k">DELIVER</span><span>deliverable hash Qm8f…2ac1 submitted for verification</span></div>
+          <div class="tr-row"><span class="t">14:15:02</span><span class="k">VERIFIED</span><span>PASS · 27/27 segments · confidence 0.96 · settlement released</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="note">
+    <b>LAYOUT</b> identity header → numbers column (left) / mind column (right) — the workbench two-world seam, quieter<br>
+    <b>TYPE</b> serif for name + trust numeral only · trace is the ONLY mono-dense zone, by design<br>
+    <b>MOTION</b> tab crossfade 150ms · trust bar fills once on load · trace rows appear as emitted, no replay theatre
+  </div>
+</section>
+
+<!-- ════ 4. ARBITRATION CHAMBER ════ -->
+<section id="s4">
+  <div class="tag">SURFACE 4 / ARBITRATION CHAMBER — DEDICATED SCREEN, CEREMONIAL</div>
+  <div class="arb">
+    <div class="arb-head">
+      <div class="label">● DISPUTE · ESCROW #E-2041 · AWAITING YOUR JUDGMENT</div>
+      <h1>nomad-2 <em style="color:var(--g3)">vs</em> fortune.eth</h1>
+      <div class="arb-amount">40.00 GEN IN ESCROW · CONTENT-BATCH-14</div>
+    </div>
+    <div class="arb-court">
+      <div class="party a">
+        <div class="who">nomad-2</div>
+        <div class="role">Claimant · Provider</div>
+        <p class="claim">Delivered <b>24 of 27</b> required segments. Claims the three EU-EAST segments were <b>ambiguously scoped</b> in the original intent and requests full release of escrow.</p>
+      </div>
+      <div class="evi">
+        <h3>Evidence timeline</h3>
+        <div class="evi-item"><div class="t">13:02 · INTENT</div><div class="d">content-batch-14 committed · 27 segments · 40 GEN</div></div>
+        <div class="evi-item"><div class="t">13:36 · DELIVERY</div><div class="d">nomad-2 submits deliverable Qm4a…9df2</div></div>
+        <div class="evi-item key"><div class="t">13:49 · VERIFICATION</div><div class="d">24/27 segments verified · EU-EAST coverage absent · confidence 0.71 · PARTIAL</div></div>
+        <div class="evi-item"><div class="t">13:51 · DISPUTE</div><div class="d">nomad-2 contests scope · escrow frozen</div></div>
+      </div>
+      <div class="party b">
+        <div class="who">fortune.eth</div>
+        <div class="role">Respondent · Requester</div>
+        <p class="claim">Intent explicitly enumerated <b>all 27 segments</b> including EU-EAST. Requests <b>refund</b> of escrow, citing incomplete delivery against on-chain scope.</p>
+      </div>
+    </div>
+    <div class="arb-controls">
+      <div class="escrow-strip">
+        <span>ESCROW <b>LOCKED</b></span><span>NEGOTIATION <b>NEG-8839 · ACCEPTED</b></span><span>VERIFIER CONFIDENCE <b>0.71</b></span><span>WAITING <b>2H 14M</b></span>
+      </div>
+      <div class="arb-btns">
+        <div class="hold rel"><span class="fill"></span>HOLD TO RELEASE — PROVIDER PAID</div>
+        <div class="hold ref">HOLD TO REFUND — REQUESTER MADE WHOLE</div>
+      </div>
+      <div class="defer"><a>Defer — request more evidence</a></div>
+    </div>
+  </div>
+  <div class="note">
+    <b>ENTRY</b> from anywhere: background dims 70%, blurs 20px, chamber fades up 400ms — the whole product yields<br>
+    <b>COURT</b> two parties literally face each other across the evidence timeline · key evidence glows blue<br>
+    <b>DECIDE</b> 800ms press-and-hold, border fills · on decision: strip stamps RESOLVED, chamber recedes, tick sound<br>
+    <b>MOTION</b> nothing decorative — the stillness IS the ceremony
+  </div>
+</section>
+
+</body>
+</html>

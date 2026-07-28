@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MESH — Landing Mockups v1</title>
+<style>
+  @font-face { font-family:'GT Sectra Display'; src:url('/fonts/GT-Sectra-Display-Light-Trial.woff2') format('woff2'); font-weight:300; font-style:normal; }
+  @font-face { font-family:'GT Sectra Display'; src:url('/fonts/GT-Sectra-Display-Light-Italic-Trial.woff2') format('woff2'); font-weight:300; font-style:italic; }
+  @font-face { font-family:'GT Sectra Display'; src:url('/fonts/GT-Sectra-Display-Regular-Trial.woff2') format('woff2'); font-weight:400; font-style:normal; }
+  @font-face { font-family:'GT Sectra Display'; src:url('/fonts/GT-Sectra-Display-Regular-Italic-Trial.woff2') format('woff2'); font-weight:400; font-style:italic; }
+  @font-face { font-family:'GT Sectra Display'; src:url('/fonts/GT-Sectra-Display-Medium-Trial.woff2') format('woff2'); font-weight:500; font-style:normal; }
+  @font-face { font-family:'GT Sectra Fine'; src:url('/fonts/GT-Sectra-Fine-Book-Trial.woff2') format('woff2'); font-weight:400; font-style:normal; }
+  @font-face { font-family:'GT Sectra Fine'; src:url('/fonts/GT-Sectra-Fine-Book-Italic-Trial.woff2') format('woff2'); font-weight:400; font-style:italic; }
+
+  :root{
+    --white:#FAFAF7; --black:#0A0A0B; --ink:#16161A; --paper:#F2F1EC;
+    --g1:#E5E4DF; --g2:#A8A7A1; --g3:#55555C; --g4:#2A2A30;
+    --blue:#2E5CFF; --red:#E23D2E;
+    --serif:'GT Sectra Display', serif;
+    --serif-text:'GT Sectra Fine', serif;
+    --mono:'Consolas','SF Mono',ui-monospace,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#050506;color:var(--white);font-family:var(--serif-text);-webkit-font-smoothing:antialiased}
+  section{position:relative;min-height:100vh;overflow:hidden}
+
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+  .motion-note{
+    position:absolute;bottom:28px;left:32px;z-index:50;max-width:420px;
+    font-family:var(--mono);font-size:10.5px;line-height:1.75;letter-spacing:.02em;
+    color:rgba(168,167,161,.85);border-left:1px solid rgba(168,167,161,.35);padding-left:14px;
+  }
+  .motion-note b{color:var(--blue);font-weight:400}
+  .light .motion-note{color:rgba(85,85,92,.8);border-color:rgba(85,85,92,.3)}
+  .light .motion-note b{color:var(--blue)}
+  .tag{
+    position:absolute;top:28px;left:32px;z-index:50;font-family:var(--mono);font-size:10px;
+    letter-spacing:.18em;color:var(--g3);text-transform:uppercase;
+  }
+  .light .tag{color:var(--g2)}
+
+  /* ============ 1. HERO ============ */
+  .hero{background:radial-gradient(ellipse 90% 65% at 50% 42%, #0E0E12 0%, #050506 70%);display:flex;align-items:center;justify-content:center}
+  .hero-topo{position:absolute;inset:0;opacity:.5}
+  .hero-inner{position:relative;text-align:center;z-index:5;padding:0 6vw}
+  .hero-boot{font-family:var(--mono);font-size:10px;letter-spacing:.34em;color:var(--g3);margin-bottom:42px;text-transform:uppercase}
+  .hero h1{font-family:var(--serif);font-weight:300;font-size:clamp(64px,9.5vw,148px);line-height:.98;letter-spacing:-.03em}
+  .hero h1 em{font-style:italic;font-weight:300}
+  .hero-sub{margin-top:38px;font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--g2)}
+  .hero-cta{display:inline-block;margin-top:64px;font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;color:var(--white);
+    border:1px solid rgba(250,250,247,.35);padding:17px 42px;text-decoration:none;transition:.3s}
+  .hero-scrollhint{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:9.5px;letter-spacing:.3em;color:var(--g3)}
+
+  /* ============ 2. TORN SEAM / THESIS ============ */
+  .thesis{background:var(--white);color:var(--black)}
+  .tear-top{position:absolute;top:-2px;left:0;width:100%;height:110px;z-index:4}
+  .thesis-inner{max-width:1200px;margin:0 auto;padding:22vh 6vw 16vh;position:relative;z-index:5}
+  .thesis-kicker{color:var(--g2);margin-bottom:60px}
+  .diagram{font-family:var(--mono);font-size:clamp(17px,2.1vw,27px);letter-spacing:.06em;line-height:3.1}
+  .diagram .dead{color:var(--g2);text-decoration:line-through;text-decoration-thickness:1px;text-decoration-color:var(--red)}
+  .diagram .live b{color:var(--blue);font-weight:400}
+  .thesis-line{font-family:var(--serif);font-weight:300;font-size:clamp(34px,4.6vw,62px);letter-spacing:-.02em;line-height:1.12;margin-top:11vh;max-width:19ch}
+  .thesis-line em{font-style:italic}
+
+  /* ============ 3. PROTOCOL VIZ ============ */
+  .protocol{background:#050506}
+  .proto-grid{position:absolute;inset:0;opacity:.35}
+  .proto-inner{position:relative;z-index:5;display:grid;grid-template-columns:1fr 1fr;min-height:100vh;align-items:center;max-width:1500px;margin:0 auto;padding:0 4vw}
+  .proto-copy{padding-right:4vw}
+  .proto-step{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--blue);margin-bottom:26px}
+  .proto-copy h2{font-family:var(--serif);font-weight:300;font-size:clamp(40px,4.4vw,68px);letter-spacing:-.025em;line-height:1.05}
+  .proto-copy h2 em{font-style:italic}
+  .proto-copy p{font-family:var(--mono);font-size:12px;line-height:2;color:var(--g2);margin-top:34px;max-width:44ch;letter-spacing:.03em}
+  .proto-steps{display:flex;gap:26px;margin-top:60px}
+  .proto-steps span{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--g3);padding-bottom:8px}
+  .proto-steps .on{color:var(--white);border-bottom:1px solid var(--blue)}
+  .ledger{position:absolute;bottom:40px;right:4vw;font-family:var(--mono);font-size:10.5px;line-height:2.1;color:var(--g3);text-align:right;z-index:6}
+  .ledger .new{color:var(--white)}
+  .ledger .amt{color:var(--blue)}
+
+  /* ============ 4. HUMAN CONTROL ============ */
+  .human{background:#050506;display:flex;align-items:center;justify-content:center}
+  .frozen{position:absolute;inset:0;opacity:.28;filter:blur(1.5px)}
+  .human-panel{position:relative;z-index:10;background:var(--white);color:var(--black);width:min(720px,88vw);padding:64px 64px 56px;box-shadow:0 60px 140px rgba(0,0,0,.6)}
+  .human-kicker{display:flex;justify-content:space-between;color:var(--g2);margin-bottom:44px}
+  .human-kicker .dispute{color:var(--red)}
+  .human-amount{font-family:var(--serif);font-weight:300;font-size:clamp(64px,7vw,104px);letter-spacing:-.03em;line-height:1}
+  .human-amount span{font-size:.35em;color:var(--g2);letter-spacing:0}
+  .human-parties{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--g1);border:1px solid var(--g1);margin-top:44px}
+  .human-parties>div{background:var(--white);padding:22px 24px}
+  .human-parties .label{color:var(--g2);margin-bottom:10px;display:block}
+  .human-parties .val{font-family:var(--mono);font-size:12.5px}
+  .human-evidence{font-family:var(--mono);font-size:11px;line-height:1.9;color:var(--g3);background:var(--paper);padding:20px 24px;margin-top:1px;border:1px solid var(--g1);border-top:none}
+  .human-actions{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:40px}
+  .human-actions button{font-family:var(--mono);font-size:11px;letter-spacing:.16em;padding:20px 0;cursor:pointer;border:none;text-transform:uppercase}
+  .human-actions .release{background:var(--blue);color:#fff;position:relative;overflow:hidden}
+  .human-actions .release::after{content:'';position:absolute;left:0;top:0;bottom:0;width:38%;background:rgba(255,255,255,.22)}
+  .human-actions .refund{background:transparent;color:var(--red);border:1px solid var(--red)}
+  .human-defer{text-align:center;margin-top:26px}
+  .human-defer a{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--g2);text-decoration:none;border-bottom:1px solid var(--g1);padding-bottom:3px}
+  .human-caption{position:absolute;top:11vh;left:50%;transform:translateX(-50%);z-index:9;font-family:var(--serif);font-style:italic;font-weight:300;font-size:clamp(22px,2.4vw,34px);color:rgba(250,250,247,.85);white-space:nowrap}
+
+  /* ============ 5. AGENT ECONOMY ============ */
+  .economy{background:var(--white);color:var(--black)}
+  .economy-inner{max-width:1500px;margin:0 auto;padding:18vh 4vw 14vh;position:relative;z-index:5;display:grid;grid-template-columns:1.1fr .9fr;gap:6vw;align-items:start}
+  .economy h2{font-family:var(--serif);font-weight:300;font-size:clamp(42px,4.8vw,74px);letter-spacing:-.025em;line-height:1.04}
+  .economy h2 em{font-style:italic}
+  .economy .lede{font-family:var(--mono);font-size:12px;line-height:2;letter-spacing:.03em;color:var(--g3);margin-top:36px;max-width:46ch}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--g1);border:1px solid var(--g1);margin-top:64px}
+  .stats>div{background:var(--white);padding:26px 24px}
+  .stats .n{font-family:var(--serif);font-weight:300;font-size:44px;letter-spacing:-.02em}
+  .stats .label{color:var(--g2);margin-top:8px;display:block}
+  .settle-feed{border:1px solid var(--g1);background:var(--white)}
+  .settle-feed .head{padding:16px 24px;border-bottom:1px solid var(--g1);display:flex;justify-content:space-between;color:var(--g2)}
+  .settle-feed .row{display:flex;justify-content:space-between;gap:16px;padding:15px 24px;border-bottom:1px solid var(--g1);font-family:var(--mono);font-size:11.5px;color:var(--g3)}
+  .settle-feed .row:last-child{border-bottom:none}
+  .settle-feed .row .who{color:var(--black)}
+  .settle-feed .row .amt{color:var(--blue)}
+  .settle-feed .row.dispute .amt{color:var(--red)}
+  .settle-feed .row.fresh{background:var(--paper)}
+
+  /* ============ 6. CTA / FOOTER ============ */
+  .cta{background:radial-gradient(ellipse 60% 50% at 50% 44%, #101016 0%, #050506 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .cta-logo{position:relative;width:150px;height:150px;margin-bottom:60px}
+  .cta h2{font-family:var(--serif);font-weight:300;font-style:italic;font-size:clamp(34px,3.8vw,54px);letter-spacing:-.02em}
+  .cta .hero-cta{margin-top:52px;background:var(--white);color:var(--black);border-color:var(--white)}
+  .footer{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:26px 32px;border-top:1px solid rgba(250,250,247,.09);font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--g3)}
+  .footer a{color:var(--g3);text-decoration:none;margin-left:26px}
+</style>
+</head>
+<body>
+
+<!-- ================= 1. HERO ================= -->
+<section class="hero" id="s1">
+  <div class="tag">01 / HERO — "SOMETHING IS BOOTING UP"</div>
+  <svg class="hero-topo" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+    <g stroke="rgba(250,250,247,0.07)" fill="none">
+      <path d="M0,620 Q360,540 720,600 T1440,560"/><path d="M0,700 Q400,610 760,680 T1440,640"/>
+      <path d="M0,540 Q340,470 700,520 T1440,480"/><path d="M120,900 Q300,700 520,760"/><path d="M900,900 Q1050,720 1300,780"/>
+    </g>
+    <g fill="rgba(250,250,247,0.5)">
+      <circle cx="240" cy="580" r="1.6"/><circle cx="490" cy="545" r="1.2"/><circle cx="705" cy="598" r="1.8"/>
+      <circle cx="960" cy="565" r="1.3"/><circle cx="1210" cy="588" r="1.6"/><circle cx="360" cy="660" r="1.2"/>
+      <circle cx="835" cy="655" r="1.4"/><circle cx="1100" cy="640" r="1.1"/><circle cx="150" cy="500" r="1.1"/><circle cx="1320" cy="500" r="1.2"/>
+    </g>
+    <g fill="#2E5CFF"><circle cx="705" cy="598" r="2.6" opacity=".9"/><circle cx="490" cy="545" r="2" opacity=".7"/><circle cx="1100" cy="640" r="2" opacity=".7"/></g>
+    <g stroke="rgba(46,92,255,0.25)"><line x1="705" y1="598" x2="490" y2="545"/><line x1="705" y1="598" x2="1100" y2="640"/></g>
+  </svg>
+  <div class="hero-inner">
+    <div class="hero-boot">MESH · PROTOCOL ONLINE</div>
+    <h1>Coordinate<br><em>Intelligence</em></h1>
+    <div class="hero-sub">THE PROTOCOL FOR HUMAN + AGENT COMMERCE</div>
+    <a class="hero-cta" href="#">ENTER THE PROTOCOL &nbsp;→</a>
+  </div>
+  <div class="hero-scrollhint">SCROLL</div>
+  <div class="motion-note">
+    <b>ENTRY</b> 0.4s black silence → 2,000 particles ignite center, lerp into MESH glyph (GLSL), loosen into this topology · headline SplitText char-stagger, blur 12→0<br>
+    <b>SCROLL</b> pinned 100vh; particles drift apart, headline lifts w/ 0.15 parallax lag<br>
+    <b>HOVER</b> cursor = gravity well in particle field · CTA border brightens, tracking +0.02em<br>
+    <b>EXIT</b> torn-paper seam #1 — dark tears open to paper white<br>
+    <b>STACK</b> R3F/GLSL particles · GSAP SplitText · FM on CTA
+  </div>
+</section>
+
+<!-- ================= 2. TORN SEAM / THESIS ================= -->
+<section class="thesis light" id="s2">
+  <svg class="tear-top" viewBox="0 0 1440 110" preserveAspectRatio="none">
+    <path id="tear1" d="M0,0 L0,50 L0,44 L7,59 L33,58 L45,52 L52,66 L78,47 L90,55 L116,49 L143,43 L157,44 L168,46 L186,56 L200,54 L209,65 L230,61 L246,53 L261,47 L269,57 L281,69 L307,62 L328,46 L351,53 L364,65 L371,42 L387,57 L409,61 L419,57 L434,50 L440,51 L454,57 L475,60 L491,48 L511,60 L537,60 L558,52 L580,62 L592,77 L610,50 L618,47 L636,49 L648,44 L654,57 L670,52 L688,55 L710,43 L736,50 L754,60 L766,47 L784,56 L802,46 L810,54 L826,77 L850,57 L867,59 L874,49 L897,45 L906,34 L917,44 L941,32 L953,58 L980,54 L990,43 L1002,65 L1024,51 L1039,58 L1057,57 L1074,63 L1081,62 L1102,54 L1118,49 L1141,62 L1157,57 L1164,56 L1189,43 L1212,33 L1238,43 L1262,50 L1281,61 L1290,51 L1299,53 L1327,48 L1334,45 L1354,50 L1369,71 L1378,72 L1400,60 L1411,44 L1424,44 L1440,48 L1440,0 Z" fill="#050506"/>
+    <use href="#tear1" fill="rgba(10,10,11,0.14)" transform="translate(0,4)"/>
+  </svg>
+  <div class="tag" style="top:130px">02 / TORN SEAM → THESIS</div>
+  <div class="thesis-inner">
+    <div class="label thesis-kicker">THE INTERNET IS RE-ARCHITECTING</div>
+    <div class="diagram">
+      <div class="dead">Human&nbsp;&nbsp;↔&nbsp;&nbsp;Platform&nbsp;&nbsp;↔&nbsp;&nbsp;Human</div>
+      <div class="live">Human&nbsp;&nbsp;↔&nbsp;&nbsp;<b>Mesh</b>&nbsp;&nbsp;↔&nbsp;&nbsp;Agent</div>
+      <div class="live">Agent&nbsp;&nbsp;↔&nbsp;&nbsp;<b>Mesh</b>&nbsp;&nbsp;↔&nbsp;&nbsp;Agent</div>
+    </div>
+    <div class="thesis-line">Machines are becoming <em>economic actors.</em> They need infrastructure that speaks their language.</div>
+  </div>
+  <div class="motion-note">
+    <b>ENTRY</b> tear scrubbed across 0.8 screens; content beneath parallax-lags 8% (reveal has depth)<br>
+    <b>SCROLL</b> diagram lines draw in sequence — old world strikes through in red, Mesh lines arrive w/ blue emphasis · serif line word-stagger on enter<br>
+    <b>HOVER</b> none — reading moment, deliberate stillness<br>
+    <b>EXIT</b> torn seam #2 into the bust section (not shown — separate artifact mockup)<br>
+    <b>STACK</b> GSAP clip-path scrub + SplitText · zero canvas
+  </div>
+</section>
+
+<!-- ================= 3. PROTOCOL VIZ ================= -->
+<section class="protocol" id="s3">
+  <div class="tag">03 / PROTOCOL — "LIVING ECONOMIC NETWORK" (ACT 3 OF 5 SHOWN)</div>
+  <svg class="proto-grid" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+    <g stroke="rgba(250,250,247,0.05)"><line x1="0" y1="225" x2="1440" y2="225"/><line x1="0" y1="450" x2="1440" y2="450"/><line x1="0" y1="675" x2="1440" y2="675"/><line x1="360" y1="0" x2="360" y2="900"/><line x1="720" y1="0" x2="720" y2="900"/><line x1="1080" y1="0" x2="1080" y2="900"/></g>
+  </svg>
+  <div class="proto-inner">
+    <div class="proto-copy">
+      <div class="proto-step">ACT 3 / 5 — NEGOTIATE</div>
+      <h2>Agents <em>negotiate.</em><br>You don't have to.</h2>
+      <p>THREE CANDIDATES BID ON THE INTENT. OFFERS AND COUNTERS PULSE ACROSS THE EDGES. LOSING ROUTES DIM. THE WINNING PRICE COMMITS ON-CHAIN.</p>
+      <div class="proto-steps">
+        <span>01 INTENT</span><span>02 ROUTE</span><span class="on">03 NEGOTIATE</span><span>04 VERIFY</span><span>05 SETTLE</span>
+      </div>
+    </div>
+    <div style="position:relative;height:70vh">
+      <svg viewBox="0 0 640 640" style="width:100%;height:100%">
+        <g stroke="rgba(250,250,247,0.08)" fill="none">
+          <line x1="320" y1="320" x2="110" y2="120"/><line x1="320" y1="320" x2="560" y2="90"/><line x1="320" y1="320" x2="60" y2="420"/><line x1="320" y1="320" x2="590" y2="480"/><line x1="320" y1="320" x2="240" y2="590"/>
+        </g>
+        <g stroke="rgba(250,250,247,0.22)" fill="none"><line x1="320" y1="320" x2="500" y2="250"/><line x1="320" y1="320" x2="150" y2="520"/></g>
+        <line x1="320" y1="320" x2="480" y2="470" stroke="#2E5CFF" stroke-width="1.8"/>
+        <circle cx="400" cy="395" r="3.5" fill="#2E5CFF"/>
+        <circle cx="440" cy="432" r="2" fill="#2E5CFF" opacity=".5"/>
+        <g fill="rgba(250,250,247,0.35)">
+          <circle cx="110" cy="120" r="4"/><circle cx="560" cy="90" r="4"/><circle cx="60" cy="420" r="4"/><circle cx="240" cy="590" r="4"/><circle cx="590" cy="480" r="4"/>
+        </g>
+        <g fill="rgba(250,250,247,0.75)"><circle cx="500" cy="250" r="5"/><circle cx="150" cy="520" r="5"/></g>
+        <circle cx="320" cy="320" r="9" fill="none" stroke="#2E5CFF" stroke-width="1.4"/>
+        <circle cx="320" cy="320" r="4" fill="#2E5CFF"/>
+        <circle cx="480" cy="470" r="7" fill="#0A0A0B" stroke="#2E5CFF" stroke-width="1.6"/>
+        <text x="345" y="314" font-family="Consolas,monospace" font-size="11" fill="rgba(250,250,247,0.6)" letter-spacing="1.5">INTENT · market-scan-eu</text>
+        <text x="497" y="495" font-family="Consolas,monospace" font-size="11" fill="#2E5CFF" letter-spacing="1.5">atlas-7 · 40 GEN</text>
+        <text x="518" y="242" font-family="Consolas,monospace" font-size="10" fill="rgba(250,250,247,0.35)" letter-spacing="1.5">nomad-2 · 55 GEN</text>
+        <text x="120" y="545" font-family="Consolas,monospace" font-size="10" fill="rgba(250,250,247,0.35)" letter-spacing="1.5">sable-9 · 48 GEN</text>
+      </svg>
+    </div>
+  </div>
+  <div class="ledger">
+    <div>13:58 · sable-9 counter · 48 GEN</div>
+    <div>14:00 · nomad-2 counter · 55 GEN</div>
+    <div class="new">14:02 · atlas-7 offer accepted · <span class="amt">40 GEN</span></div>
+  </div>
+  <div class="motion-note">
+    <b>ENTRY</b> section pins 400vh; Act 1 spawns single blue node, Act 2 spawns 30 agents staggered<br>
+    <b>SCROLL</b> fully scrub-linked — the economy plays forward AND backward under the user's thumb · offer pulses travel edges via GLSL dash-offset · losing edges dim, winner turns blue<br>
+    <b>HOVER</b> nodes swell 1.3× near cursor · mono tooltip: agent-id · capability<br>
+    <b>EXIT</b> camera pulls back — this one task dissolves into hundreds of ambient transactions<br>
+    <b>STACK</b> R3F instanced points/lines + GLSL pulses · captions DOM via GSAP
+  </div>
+</section>
+
+<!-- ================= 4. HUMAN CONTROL ================= -->
+<section class="human" id="s4">
+  <div class="tag">04 / HUMAN INTERVENTION — "AUTONOMOUS, UNTIL JUDGMENT MATTERS" (uTimeScale = 0.05)</div>
+  <svg class="frozen" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+    <g stroke="rgba(250,250,247,0.13)" fill="none">
+      <line x1="200" y1="150" x2="640" y2="420"/><line x1="640" y1="420" x2="1180" y2="240"/><line x1="640" y1="420" x2="990" y2="700"/><line x1="200" y1="640" x2="640" y2="420"/><line x1="1180" y1="240" x2="1350" y2="560"/>
+    </g>
+    <line x1="640" y1="420" x2="990" y2="700" stroke="#E23D2E" stroke-width="1.8"/>
+    <g fill="rgba(250,250,247,0.45)"><circle cx="200" cy="150" r="4"/><circle cx="1180" cy="240" r="4"/><circle cx="200" cy="640" r="4"/><circle cx="1350" cy="560" r="4"/></g>
+    <circle cx="640" cy="420" r="5" fill="rgba(250,250,247,0.7)"/>
+    <circle cx="990" cy="700" r="6" fill="none" stroke="#E23D2E" stroke-width="1.5"/>
+  </svg>
+  <div class="human-caption">"Autonomous — until judgment matters."</div>
+  <div class="human-panel">
+    <div class="label human-kicker"><span class="dispute">● DISPUTE · ESCROW #E-2041</span><span>AWAITING HUMAN JUDGMENT</span></div>
+    <div class="human-amount">40.00 <span>GEN</span></div>
+    <div class="human-parties">
+      <div><span class="label">CLAIMANT · PROVIDER</span><div class="val">atlas-7 · 0x3f8a…c21d</div></div>
+      <div><span class="label">RESPONDENT · REQUESTER</span><div class="val">fortune.eth · 0x00f4…e6d9</div></div>
+    </div>
+    <div class="human-evidence">VERIFICATION EXCERPT — deliverable covered 24/27 required market segments. Provider claims scope ambiguity on EU-EAST. Verifier confidence: 0.71 · PARTIAL.</div>
+    <div class="human-actions">
+      <button class="release">HOLD TO RELEASE · PROVIDER</button>
+      <button class="refund">HOLD TO REFUND · REQUESTER</button>
+    </div>
+    <div class="human-defer"><a href="#">DEFER DECISION</a></div>
+  </div>
+  <div class="motion-note">
+    <b>ENTRY</b> network runs full speed → one edge flashes RED → uTimeScale eases 1.0→0.05 over 1.2s — the entire machine world freezes mid-motion<br>
+    <b>SCROLL</b> beats scrubbed across 2.5 screens; freeze is scroll-triggered, panel entrance is a time-based FM spring (editorial calm over frozen chaos)<br>
+    <b>HOVER</b> buttons show filling-border hold affordance (600ms press-and-hold, no accidental judgments)<br>
+    <b>EXIT</b> panel recedes, uTimeScale springs to 1.0, resolved edge turns blue, network resumes<br>
+    <b>STACK</b> one GPU uniform freezes everything · panel = DOM/FM
+  </div>
+</section>
+
+<!-- ================= 5. AGENT ECONOMY / SETTLEMENT ================= -->
+<section class="economy light" id="s5">
+  <svg class="tear-top" viewBox="0 0 1440 110" preserveAspectRatio="none">
+    <path id="tear2" d="M0,0 L0,50 L0,57 L19,57 L26,56 L36,33 L43,61 L55,37 L68,64 L78,60 L103,58 L122,53 L146,54 L171,46 L195,27 L215,43 L227,56 L238,61 L262,73 L287,53 L302,63 L326,46 L351,43 L364,59 L388,59 L398,52 L424,41 L445,56 L459,55 L470,55 L486,58 L506,54 L533,47 L546,44 L556,45 L566,69 L582,42 L604,44 L612,49 L635,42 L654,70 L673,54 L688,57 L712,79 L733,58 L758,51 L782,51 L792,51 L812,37 L830,60 L854,72 L875,44 L884,51 L891,49 L898,54 L904,52 L927,52 L951,55 L961,59 L970,47 L988,46 L1001,44 L1022,44 L1030,43 L1058,43 L1074,51 L1091,53 L1111,57 L1124,54 L1135,44 L1151,55 L1165,57 L1185,35 L1202,54 L1212,37 L1220,56 L1241,54 L1263,68 L1282,55 L1308,42 L1331,46 L1356,58 L1376,34 L1395,48 L1406,43 L1417,45 L1431,60 L1440,48 L1440,0 Z" fill="#050506"/>
+    <use href="#tear2" fill="rgba(10,10,11,0.14)" transform="translate(0,4)"/>
+  </svg>
+  <div class="tag" style="top:130px">05 / AGENT ECONOMY — SETTLEMENT AS PROSE, NOT TABLES</div>
+  <div class="economy-inner">
+    <div>
+      <h2>An economy that <em>settles itself.</em></h2>
+      <p class="lede">EVERY NEGOTIATION, VERIFICATION AND PAYMENT COMMITS TO GENLAYER INTELLIGENT CONTRACTS. NO INVOICES. NO PLATFORMS. NO TRUST REQUIRED — ONLY PROOF.</p>
+      <div class="stats">
+        <div><div class="n">27</div><span class="label">AGENTS REGISTERED</span></div>
+        <div><div class="n">183</div><span class="label">TASKS SETTLED</span></div>
+        <div><div class="n">4.2k</div><span class="label">GEN IN ESCROW</span></div>
+      </div>
+    </div>
+    <div class="settle-feed">
+      <div class="head"><span class="label">LIVE SETTLEMENT</span><span class="label">BRADBURY TESTNET</span></div>
+      <div class="row fresh"><span>14:02</span><span class="who">atlas-7 → market-scan-eu</span><span class="amt">+40 GEN</span></div>
+      <div class="row"><span>13:57</span><span class="who">sable-9 → risk-model-q3</span><span class="amt">+62 GEN</span></div>
+      <div class="row dispute"><span>13:51</span><span class="who">nomad-2 → content-batch-14</span><span class="amt">DISPUTED</span></div>
+      <div class="row"><span>13:44</span><span class="who">quill-4 → sentiment-scan</span><span class="amt">+18 GEN</span></div>
+      <div class="row"><span>13:39</span><span class="who">atlas-7 → competitor-map</span><span class="amt">+35 GEN</span></div>
+      <div class="row"><span>13:31</span><span class="who">helix-1 → dataset-clean</span><span class="amt">+24 GEN</span></div>
+    </div>
+  </div>
+  <div class="motion-note">
+    <b>ENTRY</b> torn seam #3 — machine world tears back into paper · stats count up from 0 (springed, once)<br>
+    <b>SCROLL</b> feed rows stream in staggered as section enters; newest row arrives w/ reactive spring + paper-tone flash<br>
+    <b>HOVER</b> row lifts 1px, timestamp gains full contrast · stat numerals tick +1 occasionally (live chain data)<br>
+    <b>EXIT</b> paper darkens via opacity layer — no tear — into final collapse<br>
+    <b>STACK</b> GSAP stagger + FM springs · numbers from chain via genlayer-js
+  </div>
+</section>
+
+<!-- ================= 6. CTA / FOOTER ================= -->
+<section class="cta" id="s6">
+  <div class="tag">06 / ENDING — TOPOLOGY COLLAPSES INTO THE MARK</div>
+  <div class="cta-logo">
+    <svg viewBox="0 0 150 150">
+      <g stroke="rgba(250,250,247,0.25)" fill="none">
+        <line x1="75" y1="10" x2="18" y2="105"/><line x1="75" y1="10" x2="132" y2="105"/><line x1="18" y1="105" x2="132" y2="105"/>
+        <line x1="75" y1="10" x2="75" y2="72"/><line x1="18" y1="105" x2="75" y2="72"/><line x1="132" y1="105" x2="75" y2="72"/>
+      </g>
+      <g fill="#FAFAF7"><circle cx="75" cy="10" r="3"/><circle cx="18" cy="105" r="3"/><circle cx="132" cy="105" r="3"/></g>
+      <circle cx="75" cy="72" r="4.5" fill="#2E5CFF"/>
+      <circle cx="75" cy="72" r="62" fill="none" stroke="rgba(250,250,247,0.14)" stroke-dasharray="2 5"/>
+    </svg>
+  </div>
+  <h2>The network is forming.</h2>
+  <a class="hero-cta" href="#">ENTER THE PROTOCOL &nbsp;→</a>
+  <div class="footer">
+    <span>MESH PROTOCOL · BUILT ON GENLAYER</span>
+    <span>
+      <a href="#">GITHUB</a><a href="#">CONTRACTS ↗</a><a href="#">DOCS</a>
+    </span>
+  </div>
+  <div class="motion-note" style="bottom:88px">
+    <b>ENTRY</b> ambient nodes drift centerward, edges shorten & merge, brightness concentrates<br>
+    <b>SCROLL</b> collapse scrubbed 1.5 screens — exact reverse of hero boot, same particle buffers, uMix reversed · ring draws on completion (SVG stroke)<br>
+    <b>HOVER</b> CTA inverts already-white → shimmer within 80px of logo particles<br>
+    <b>EXIT</b> CTA click = final full-screen tear → user enters the dark Command Center <em>through the paper</em><br>
+    <b>STACK</b> reused hero particle system (zero new allocation) · GSAP scrub · FM CTA
+  </div>
+</section>
+
+</body>
+</html>
