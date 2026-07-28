@@ -1,15 +1,11 @@
+# v0.2.16
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
-
-# Mesh Protocol -- Reputation Ledger
-# GenLayer Intelligent Contract
-# Layer 5: Post-settlement reputation
-#
-# ACCESS CONTROL: reputation is an institutional record. Only the admin
-# (deployer) or an explicitly authorized writer (e.g. the settlement layer)
-# may mutate it. Arbitrary callers are rejected. Role-map keys are stored as
-# lowercased hex so lookups never miss on checksum-case differences.
-
 from genlayer import *
+
+# Mesh Protocol -- Reputation Ledger (Layer 5). Reputation is an institutional
+# record: only the admin or an authorized writer may mutate it; arbitrary callers
+# are rejected. Role-map keys are lowercased hex.
+
 
 class ReputationLedger(gl.Contract):
     """

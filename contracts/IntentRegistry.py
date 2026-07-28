@@ -1,10 +1,9 @@
+# v0.2.16
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
-
-# Mesh Protocol -- Intent Registry
-# GenLayer Intelligent Contract
-# Layer 2: Full intent payload stored on-chain (no IPFS hash -- full data)
-
 from genlayer import *
+
+# Mesh Protocol -- Intent Registry (Layer 2): full intent payload stored on-chain.
+
 
 class IntentRegistry(gl.Contract):
     """

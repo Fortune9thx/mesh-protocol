@@ -1,17 +1,12 @@
+# v0.2.16
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
-
-# Mesh Protocol -- Negotiation Engine
-# GenLayer Intelligent Contract
-# Layer 3: On-chain AI-powered negotiation
-#
-# The centrepiece of Mesh Protocol's on-chain orchestration.
-# propose_and_evaluate() uses GenLayer's Equivalence Principle to run an
-# LLM consensus across all validator nodes -- the AI verdict (accepted /
-# counter_N / rejected) is agreed upon before any storage write commits.
-# No off-chain negotiation service required.
-
-import json
 from genlayer import *
+import json
+
+# Mesh Protocol -- Negotiation Engine (Layer 3): on-chain AI-powered price
+# negotiation. propose_and_evaluate() runs GenLayer LLM consensus over the price
+# via the Equivalence Principle before any storage write commits.
+
 
 class NegotiationEngine(gl.Contract):
     """

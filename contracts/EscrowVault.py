@@ -1,25 +1,12 @@
+# v0.2.16
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
-
-# Mesh Protocol -- Escrow Vault
-# GenLayer Intelligent Contract
-# Layer 5: Settlement
-#
-# ACCESS CONTROL:
-#   - lock:            open (caller becomes the payer)
-#   - release:         payer (the requester who funded) or an arbitrator
-#   - refund:          payee (the provider) or an arbitrator
-#   - dispute:         only a party to the escrow (payer or payee)
-#   - resolve_dispute: the OUTCOME is decided by GenLayer validator LLM
-#                      consensus over both parties' evidence -- no caller
-#                      chooses the winner. Trigger is limited to a party or
-#                      an arbitrator to prevent spam.
-# Role-map keys are lowercased hex so lookups never miss on checksum case.
-#
-# NEGOTIATION_ENGINE_ADDRESS must be updated after each NegotiationEngine
-# redeploy, before deploying EscrowVault.
-
-import json
 from genlayer import *
+import json
+
+# Mesh Protocol -- Escrow Vault (Layer 5). Access control: lock is open (caller
+# becomes payer); release = payer/arbitrator; refund = payee/arbitrator; dispute
+# = a party; resolve_dispute outcome is decided by GenLayer validator consensus,
+# not by any caller. NEGOTIATION_ENGINE_ADDRESS is patched at deploy time.
 
 NEGOTIATION_ENGINE_ADDRESS = Address("0xb30Fa9E85d5640a09eD10C73bE9cB0aa470cb27A")
 
