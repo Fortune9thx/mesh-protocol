@@ -1,0 +1,7 @@
+{
+  "AgentRegistry": "0xb9cC5fd77A65BC2819ac0c10C00dd46733844a58",
+  "IntentRegistry": "0x70E21d36fbaFE9F4FDc49938a6aF50ac41513061",
+  "NegotiationEngine": "0xC98BDa3146da62b2Ef841263bdE2Ea73b9327489",
+  "EscrowVault": "0xFe60cECAe1F5d5AC42B9794dec4Cd80a39eDF358",
+  "ReputationLedger": "0xCF1e1FdAAcf41C2EC98bDE41d2982A200C030E01"
+}
