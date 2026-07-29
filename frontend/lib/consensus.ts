@@ -41,9 +41,11 @@ function countAgreements(validatorVotes: unknown): number {
 export async function getConsensus(hash: string): Promise<ConsensusData | null> {
   try {
     const { createClient } = await import("genlayer-js");
-    const { testnetBradbury } = await import("genlayer-js/chains");
+    const chains = await import("genlayer-js/chains");
+    const key = process.env.NEXT_PUBLIC_MESH_NETWORK ?? "bradbury";
+    const chain = key === "studionet" ? chains.studionet : chains.testnetBradbury;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const client: any = createClient({ chain: testnetBradbury });
+    const client: any = createClient({ chain });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tx: any = await client.getTransaction({ hash });

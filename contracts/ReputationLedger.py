@@ -1,4 +1,3 @@
-# v0.2.16
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 from genlayer import *
 
@@ -93,10 +92,11 @@ class ReputationLedger(gl.Contract):
         return self.quality_sum.get(agent_id, u64(0)) // total
 
     @gl.public.view
-    def get_stats(self, agent_id: str) -> str:
-        total = self.total_tasks.get(agent_id, u64(0))
-        s = self.successful.get(agent_id, u64(0))
-        f = self.failed.get(agent_id, u64(0))
-        rel = self.get_reliability(agent_id)
-        q = self.get_avg_quality(agent_id)
-        return f"total={total},success={s},failed={f},reliability={rel},quality={q}"
+    def get_stats(self, agent_id: str) -> dict:
+        return {
+            "total": int(self.total_tasks.get(agent_id, u64(0))),
+            "success": int(self.successful.get(agent_id, u64(0))),
+            "failed": int(self.failed.get(agent_id, u64(0))),
+            "reliability": int(self.get_reliability(agent_id)),
+            "quality": int(self.get_avg_quality(agent_id)),
+        }

@@ -42,10 +42,23 @@ const addresses = JSON.parse(
 );
 
 const { createClient, createAccount } = await import("genlayer-js");
-const { testnetBradbury } = await import("genlayer-js/chains");
+const chains = await import("genlayer-js/chains");
+
+const NETWORK_KEY = (process.env.MESH_NETWORK ?? "bradbury").toLowerCase();
+const CHAIN_BY_KEY = {
+  studionet: chains.studionet,
+  bradbury: chains.testnetBradbury,
+  asimov: chains.testnetAsimov,
+  localnet: chains.localnet,
+};
+const chain = CHAIN_BY_KEY[NETWORK_KEY];
+if (!chain) {
+  console.error(`ERROR: unknown MESH_NETWORK "${NETWORK_KEY}". Use: ${Object.keys(CHAIN_BY_KEY).join(", ")}`);
+  process.exit(1);
+}
 
 const attacker = createAccount();
-const attackerClient = createClient({ chain: testnetBradbury, account: attacker });
+const attackerClient = createClient({ chain, account: attacker });
 
 console.log("Attacker wallet:", attacker.address);
 
@@ -54,7 +67,7 @@ let funded = false;
 if (process.env.GENLAYER_PRIVATE_KEY) {
   try {
     const deployer = createAccount(process.env.GENLAYER_PRIVATE_KEY);
-    const dClient = createClient({ chain: testnetBradbury, account: deployer });
+    const dClient = createClient({ chain, account: deployer });
     const hash = await dClient.sendTransaction({
       to: attacker.address,
       value: 100000000000000000n, // 0.1 GEN

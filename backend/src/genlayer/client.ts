@@ -27,9 +27,11 @@ let _client: Awaited<ReturnType<typeof buildClient>> | null = null;
 
 async function buildClient() {
   const { createClient, createAccount } = await import("genlayer-js");
-  const { testnetBradbury } = await import("genlayer-js/chains");
+  const chains = await import("genlayer-js/chains");
+  const key = (process.env.MESH_NETWORK ?? "bradbury").toLowerCase();
+  const chain = key === "studionet" ? chains.studionet : chains.testnetBradbury;
   const account = createAccount(process.env.GENLAYER_PRIVATE_KEY as `0x${string}`);
-  return createClient({ chain: testnetBradbury, account });
+  return createClient({ chain, account });
 }
 
 async function getClient() {

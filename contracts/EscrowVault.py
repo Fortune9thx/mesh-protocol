@@ -1,14 +1,14 @@
-# v0.2.16
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 from genlayer import *
 import json
+import typing
 
 # Mesh Protocol -- Escrow Vault (Layer 5). Access control: lock is open (caller
 # becomes payer); release = payer/arbitrator; refund = payee/arbitrator; dispute
 # = a party; resolve_dispute outcome is decided by GenLayer validator consensus,
 # not by any caller. NEGOTIATION_ENGINE_ADDRESS is patched at deploy time.
 
-NEGOTIATION_ENGINE_ADDRESS = Address("0xb30Fa9E85d5640a09eD10C73bE9cB0aa470cb27A")
+NEGOTIATION_ENGINE_ADDRESS = Address("0xe53f3F8C5BB12aFB13A45012638B0b8EF39A64E8")
 
 
 # Sending native GEN to an EOA (payer/payee wallets) is an EXTERNAL message and
@@ -21,6 +21,25 @@ class _Recipient:
 
     class Write:
         pass
+
+def _extract_json(text: typing.Any) -> typing.Any:
+    if isinstance(text, dict):
+        return text
+    if not isinstance(text, str):
+        return None
+    try:
+        return json.loads(text)
+    except (ValueError, TypeError):
+        pass
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        try:
+            return json.loads(text[start:end + 1])
+        except (ValueError, TypeError):
+            return None
+    return None
+
 
 class EscrowVault(gl.Contract):
     """
@@ -46,13 +65,11 @@ class EscrowVault(gl.Contract):
     payee_evidence: TreeMap[str, str]   # escrow_id -> provider's case
     dispute_verdict: TreeMap[str, str]  # escrow_id -> validator consensus verdict
 
-    # ---- enumeration (DynArray unsupported; TreeMap key must be str) ----
-    escrow_count: u256
-    escrow_index: TreeMap[str, str]     # str(index) -> escrow_id
+    # Ordered enumeration of escrow ids for pagination.
+    escrow_ids: DynArray[str]
 
     def __init__(self) -> None:
         self.admin = gl.message.sender_address
-        self.escrow_count = u256(0)
 
     # ---- internal role check ----
     def _is_arbitrator(self, addr: Address) -> bool:
@@ -90,9 +107,7 @@ class EscrowVault(gl.Contract):
         self.intent_map[escrow_id] = intent_id
         self.negotiation_map[escrow_id] = negotiation_id
 
-        idx = self.escrow_count
-        self.escrow_index[str(int(idx))] = escrow_id
-        self.escrow_count = idx + u256(1)
+        self.escrow_ids.append(escrow_id)
 
     @gl.public.write
     def release(self, escrow_id: str) -> None:
@@ -207,12 +222,15 @@ class EscrowVault(gl.Contract):
                 "Respond ONLY as JSON, nothing else:\n"
                 '{"verdict": "release" | "refund"}'
             )
-            return gl.nondet.exec_prompt(prompt).replace("```json", "").replace("```", "")
+            return gl.nondet.exec_prompt(prompt)
 
         raw = gl.eq_principle.prompt_comparative(
             adjudicate, "The 'verdict' field must be the same"
         )
-        decision = str(json.loads(raw).get("verdict", "refund")).strip().lower()
+        parsed = _extract_json(raw)
+        if not isinstance(parsed, dict):
+            parsed = {"verdict": "refund"}
+        decision = str(parsed.get("verdict", "refund")).strip().lower()
         if decision != "release":
             decision = "refund"
         self.dispute_verdict[escrow_id] = decision
@@ -238,33 +256,38 @@ class EscrowVault(gl.Contract):
 
     @gl.public.view
     def get_escrow_count(self) -> u256:
-        return self.escrow_count
+        return u256(len(self.escrow_ids))
 
     @gl.public.view
     def get_escrow_id_at(self, index: u256) -> str:
-        return self.escrow_index.get(str(int(index)), "")
-
-    @gl.public.view
-    def get_escrow_data(self, escrow_id: str) -> str:
-        """Returns pipe-delimited escrow data string for frontend parsing."""
-        if escrow_id not in self.statuses:
+        i = int(index)
+        if i < 0 or i >= len(self.escrow_ids):
             return ""
-        status = self.statuses.get(escrow_id, "unknown")
-        balance = int(self.balances.get(escrow_id, u256(0)))
-        payer = self.payers[escrow_id].as_hex if escrow_id in self.payers else ""
-        payee = self.payees[escrow_id].as_hex if escrow_id in self.payees else ""
-        intent = self.intent_map.get(escrow_id, "")
-        neg = self.negotiation_map.get(escrow_id, "")
-        verdict = self.dispute_verdict.get(escrow_id, "")
-        return f"status={status}|balance={balance}|payer={payer}|payee={payee}|intent={intent}|neg={neg}|verdict={verdict}"
+        return self.escrow_ids[i]
 
     @gl.public.view
-    def get_dispute(self, escrow_id: str) -> str:
-        """Returns pipe-delimited dispute evidence + verdict."""
-        payer_case = self.payer_evidence.get(escrow_id, "")
-        payee_case = self.payee_evidence.get(escrow_id, "")
-        verdict = self.dispute_verdict.get(escrow_id, "")
-        return f"payer_evidence={payer_case}|payee_evidence={payee_case}|verdict={verdict}"
+    def get_escrow_data(self, escrow_id: str) -> dict:
+        """Full escrow record. Empty dict if unknown."""
+        if escrow_id not in self.statuses:
+            return {}
+        return {
+            "status": self.statuses.get(escrow_id, "unknown"),
+            "balance": str(self.balances.get(escrow_id, u256(0))),
+            "payer": self.payers[escrow_id].as_hex if escrow_id in self.payers else "",
+            "payee": self.payees[escrow_id].as_hex if escrow_id in self.payees else "",
+            "intent": self.intent_map.get(escrow_id, ""),
+            "negotiation": self.negotiation_map.get(escrow_id, ""),
+            "verdict": self.dispute_verdict.get(escrow_id, ""),
+        }
+
+    @gl.public.view
+    def get_dispute(self, escrow_id: str) -> dict:
+        """Both parties' evidence and the validator verdict."""
+        return {
+            "payer_evidence": self.payer_evidence.get(escrow_id, ""),
+            "payee_evidence": self.payee_evidence.get(escrow_id, ""),
+            "verdict": self.dispute_verdict.get(escrow_id, ""),
+        }
 
     @gl.public.view
     def get_status(self, escrow_id: str) -> str:

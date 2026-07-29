@@ -1,4 +1,3 @@
-# v0.2.16
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 from genlayer import *
 
@@ -23,12 +22,11 @@ class AgentRegistry(gl.Contract):
     spending_limits: TreeMap[str, u256]     # agent_id -> limit in GEN wei
     autonomy_levels: TreeMap[str, u64]      # agent_id -> 0-3
 
-    # Enumeration index (DynArray not supported; TreeMap key must be str)
-    agent_count: u256
-    agent_index: TreeMap[str, str]          # str(index) -> agent_id
+    # Ordered enumeration of agent ids for pagination.
+    agent_ids: DynArray[str]
 
     def __init__(self) -> None:
-        self.agent_count = u256(0)
+        pass
 
     @gl.public.write
     def register_agent(
@@ -55,10 +53,7 @@ class AgentRegistry(gl.Contract):
         self.autonomy_levels[agent_id] = autonomy_level
         self.spending_limits[agent_id] = spending_limit
 
-        # Append to enumeration index
-        idx = self.agent_count
-        self.agent_index[str(int(idx))] = agent_id
-        self.agent_count = idx + u256(1)
+        self.agent_ids.append(agent_id)
 
     @gl.public.write
     def update_agent(self, agent_id: str, new_spending_limit: u256, new_pricing_model: str) -> None:
@@ -89,27 +84,31 @@ class AgentRegistry(gl.Contract):
 
     @gl.public.view
     def get_agent_count(self) -> u256:
-        return self.agent_count
+        return u256(len(self.agent_ids))
 
     @gl.public.view
     def get_agent_id_at(self, index: u256) -> str:
-        return self.agent_index.get(str(int(index)), "")
+        i = int(index)
+        if i < 0 or i >= len(self.agent_ids):
+            return ""
+        return self.agent_ids[i]
 
     @gl.public.view
-    def get_agent_data(self, agent_id: str) -> str:
-        """Returns pipe-delimited agent data string for frontend parsing."""
+    def get_agent_data(self, agent_id: str) -> dict:
+        """Full agent record. Empty dict if the agent is unknown."""
         if agent_id not in self.owner_map:
-            return ""
-        name = self.name_map.get(agent_id, "")
-        cat = self.category_map.get(agent_id, "")
-        caps = self.capabilities_map.get(agent_id, "")
-        status = self.status_map.get(agent_id, "unknown")
-        limit = int(self.spending_limits.get(agent_id, u256(0)))
-        level = int(self.autonomy_levels.get(agent_id, u64(0)))
-        pricing = self.pricing_map.get(agent_id, "per_task")
-        price = int(self.base_price_map.get(agent_id, u256(0)))
-        owner = self.owner_map[agent_id].as_hex
-        return f"name={name}|cat={cat}|caps={caps}|status={status}|limit={limit}|level={level}|pricing={pricing}|price={price}|owner={owner}"
+            return {}
+        return {
+            "name": self.name_map.get(agent_id, ""),
+            "category": self.category_map.get(agent_id, ""),
+            "capabilities": self.capabilities_map.get(agent_id, ""),
+            "status": self.status_map.get(agent_id, "unknown"),
+            "spending_limit": str(self.spending_limits.get(agent_id, u256(0))),
+            "autonomy_level": int(self.autonomy_levels.get(agent_id, u64(0))),
+            "pricing_model": self.pricing_map.get(agent_id, "per_task"),
+            "base_price": str(self.base_price_map.get(agent_id, u256(0))),
+            "owner": self.owner_map[agent_id].as_hex,
+        }
 
     @gl.public.view
     def get_agent_status(self, agent_id: str) -> str:

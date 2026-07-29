@@ -13,11 +13,11 @@
 
 // ── Contract addresses (update after each redeploy) ──────────────────────────
 export const CONTRACT_ADDRESSES = {
-  AgentRegistry:     "0xb9cC5fd77A65BC2819ac0c10C00dd46733844a58" as `0x${string}`,
-  IntentRegistry:    "0x70E21d36fbaFE9F4FDc49938a6aF50ac41513061" as `0x${string}`,
-  NegotiationEngine: "0xC98BDa3146da62b2Ef841263bdE2Ea73b9327489" as `0x${string}`,
-  EscrowVault:       "0xFe60cECAe1F5d5AC42B9794dec4Cd80a39eDF358" as `0x${string}`,
-  ReputationLedger:  "0xCF1e1FdAAcf41C2EC98bDE41d2982A200C030E01" as `0x${string}`,
+  AgentRegistry:     "0x26607aF8B3c6BA4BACD0072dbD6Ff3A034F4d295" as `0x${string}`,
+  IntentRegistry:    "0xC7d9cdED4D0AF762AD745703809055f9FACc8204" as `0x${string}`,
+  NegotiationEngine: "0xe53f3F8C5BB12aFB13A45012638B0b8EF39A64E8" as `0x${string}`,
+  EscrowVault:       "0x3d66EF39b5778e1D6bceF5252E7A01d54F25AaA7" as `0x${string}`,
+  ReputationLedger:  "0x1193B3637964EFd799946675e5F63168277bC074" as `0x${string}`,
 } as const;
 
 type ContractName = keyof typeof CONTRACT_ADDRESSES;
@@ -29,18 +29,22 @@ let _readClient: unknown = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyClient = any;
 
+async function getChain() {
+  const chains = await import("genlayer-js/chains");
+  const key = process.env.NEXT_PUBLIC_MESH_NETWORK ?? "bradbury";
+  return key === "studionet" ? chains.studionet : chains.testnetBradbury;
+}
+
 async function getReadClient(): Promise<AnyClient> {
   if (_readClient) return _readClient;
   const { createClient } = await import("genlayer-js");
-  const { testnetBradbury } = await import("genlayer-js/chains");
-  _readClient = createClient({ chain: testnetBradbury });
+  _readClient = createClient({ chain: await getChain() });
   return _readClient;
 }
 
 async function getWriteClient(provider: unknown, address: string): Promise<AnyClient> {
   const { createClient } = await import("genlayer-js");
-  const { testnetBradbury } = await import("genlayer-js/chains");
-  return createClient({ chain: testnetBradbury, account: address as `0x${string}`, provider });
+  return createClient({ chain: await getChain(), account: address as `0x${string}`, provider });
 }
 
 // ── Core call helpers ─────────────────────────────────────────────────────────
@@ -90,14 +94,18 @@ export async function writeContract(
 
 // ── Data parsers ──────────────────────────────────────────────────────────────
 
-function parsePiped(raw: string): Record<string, string> {
+// View methods return native dicts. genlayer-js decodes them as either a plain
+// object or a Map depending on the value; normalize both to a plain record.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function asRecord(raw: unknown): Record<string, any> {
   if (!raw) return {};
-  return Object.fromEntries(
-    raw.split("|").map((kv) => {
-      const eq = kv.indexOf("=");
-      return eq === -1 ? [kv, ""] : [kv.slice(0, eq), kv.slice(eq + 1)];
-    }),
-  );
+  if (raw instanceof Map) return Object.fromEntries(raw);
+  if (typeof raw === "object") return raw as Record<string, unknown>;
+  return {};
+}
+
+function isEmpty(d: Record<string, unknown>): boolean {
+  return Object.keys(d).length === 0;
 }
 
 // ── AgentRegistry ─────────────────────────────────────────────────────────────
@@ -112,19 +120,18 @@ export async function fetchAgentIdAt(index: number): Promise<string> {
 }
 
 export async function fetchAgentData(agentId: string) {
-  const raw = (await readContract("AgentRegistry", "get_agent_data", [agentId])) as string ?? "";
-  if (!raw) return null;
-  const d = parsePiped(raw);
+  const d = asRecord(await readContract("AgentRegistry", "get_agent_data", [agentId]));
+  if (isEmpty(d)) return null;
   return {
     agent_id: agentId,
     name: d.name ?? agentId,
-    category: d.cat ?? "general",
-    capabilities: (d.caps ?? "").split(",").filter(Boolean),
+    category: d.category ?? "general",
+    capabilities: String(d.capabilities ?? "").split(",").filter(Boolean),
     status: (d.status ?? "active") as "active" | "paused" | "deactivated",
-    spending_limit: Number(d.limit ?? 0),
-    autonomy_level: Number(d.level ?? 1),
-    pricing_model: (d.pricing ?? "per_task") as "per_task" | "per_hour" | "flat" | "auction",
-    base_price: Number(d.price ?? 0),
+    spending_limit: Number(d.spending_limit ?? 0),
+    autonomy_level: Number(d.autonomy_level ?? 1),
+    pricing_model: (d.pricing_model ?? "per_task") as "per_task" | "per_hour" | "flat" | "auction",
+    base_price: Number(d.base_price ?? 0),
     owner_wallet: d.owner ?? "",
     reliability_score: 80,
     confidence_score: 0.85,
@@ -155,16 +162,14 @@ export async function fetchEscrowIdAt(index: number): Promise<string> {
 }
 
 export async function fetchEscrowData(escrowId: string) {
-  const raw = (await readContract("EscrowVault", "get_escrow_data", [escrowId])) as string ?? "";
-  if (!raw) return null;
-  const d = parsePiped(raw);
-  const balanceWei = Number(d.balance ?? 0);
+  const d = asRecord(await readContract("EscrowVault", "get_escrow_data", [escrowId]));
+  if (isEmpty(d)) return null;
   return {
     escrow_id: escrowId,
     intent_id: d.intent ?? "",
     payer: d.payer ?? "",
     payee: d.payee ?? "",
-    amount: balanceWei / 1e18,
+    amount: Number(d.balance ?? 0) / 1e18,
     status: (d.status ?? "locked") as "locked" | "released" | "refunded" | "disputed",
     verdict: d.verdict ?? "",
     created_at: new Date().toISOString(),
@@ -173,9 +178,7 @@ export async function fetchEscrowData(escrowId: string) {
 }
 
 export async function fetchDispute(escrowId: string) {
-  const raw = (await readContract("EscrowVault", "get_dispute", [escrowId])) as string ?? "";
-  if (!raw) return { payer_evidence: "", payee_evidence: "", verdict: "" };
-  const d = parsePiped(raw);
+  const d = asRecord(await readContract("EscrowVault", "get_dispute", [escrowId]));
   return {
     payer_evidence: d.payer_evidence ?? "",
     payee_evidence: d.payee_evidence ?? "",
@@ -204,14 +207,13 @@ export async function fetchIntentIdAt(index: number): Promise<string> {
 }
 
 export async function fetchIntentData(intentId: string) {
-  const raw = (await readContract("IntentRegistry", "get_intent_data", [intentId])) as string ?? "";
-  if (!raw) return null;
-  const d = parsePiped(raw);
+  const d = asRecord(await readContract("IntentRegistry", "get_intent_data", [intentId]));
+  if (isEmpty(d)) return null;
   return {
     intent_id: intentId,
     title: d.title ?? intentId,
-    description: d.desc ?? "",
-    requirements: (d.reqs ?? "").split(",").filter(Boolean),
+    description: d.description ?? "",
+    requirements: String(d.requirements ?? "").split(",").filter(Boolean),
     priority: (d.priority ?? "medium") as "low" | "medium" | "high" | "critical",
     budget: Number(d.budget ?? 0) / 1e18,
     deadline: new Date(Number(d.deadline ?? 0) * 1000).toISOString(),
@@ -225,9 +227,8 @@ export async function fetchIntentData(intentId: string) {
 // ── NegotiationEngine ─────────────────────────────────────────────────────────
 
 export async function fetchNegotiationData(negId: string) {
-  const raw = (await readContract("NegotiationEngine", "get_negotiation_data", [negId])) as string ?? "";
-  if (!raw) return null;
-  const d = parsePiped(raw);
+  const d = asRecord(await readContract("NegotiationEngine", "get_negotiation_data", [negId]));
+  if (isEmpty(d)) return null;
   return {
     negotiation_id: negId,
     intent_id: d.intent ?? "",

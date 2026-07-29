@@ -33,9 +33,20 @@ for (const line of fs.readFileSync(envPath, "utf8").split("\n")) {
 const A = JSON.parse(fs.readFileSync(path.join(ROOT, "contracts", "addresses.json"), "utf8"));
 
 const { createClient, createAccount } = await import("genlayer-js");
-const { testnetBradbury } = await import("genlayer-js/chains");
+const chains = await import("genlayer-js/chains");
 
-const chain = testnetBradbury;
+const NETWORK_KEY = (process.env.MESH_NETWORK ?? "bradbury").toLowerCase();
+const CHAIN_BY_KEY = {
+  studionet: chains.studionet,
+  bradbury: chains.testnetBradbury,
+  asimov: chains.testnetAsimov,
+  localnet: chains.localnet,
+};
+const chain = CHAIN_BY_KEY[NETWORK_KEY];
+if (!chain) {
+  console.error(`ERROR: unknown MESH_NETWORK "${NETWORK_KEY}". Use: ${Object.keys(CHAIN_BY_KEY).join(", ")}`);
+  process.exit(1);
+}
 const payer = createAccount(process.env.GENLAYER_PRIVATE_KEY); // deployer = requester
 const payee = createAccount();                                 // provider
 const attacker = createAccount();                              // non-party
@@ -101,7 +112,7 @@ await write(payerC, "resolve_dispute", [ESCROW]);
 // 5. Assert settled + funds moved
 console.log("5. Verifying settlement…");
 const data = await readC.readContract({ address: A.EscrowVault, functionName: "get_escrow_data", args: [ESCROW] });
-const fields = Object.fromEntries(String(data).split("|").map((p) => p.split("=")));
+const fields = (data instanceof Map) ? Object.fromEntries(data) : (data && typeof data === "object") ? data : {};
 ["released", "refunded"].includes(fields.status)
   ? ok(`escrow ${fields.status} by validator verdict='${fields.verdict}'`)
   : bad(`status is ${fields.status}, expected released/refunded`);

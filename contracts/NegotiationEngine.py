@@ -1,11 +1,30 @@
-# v0.2.16
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 from genlayer import *
 import json
+import typing
 
 # Mesh Protocol -- Negotiation Engine (Layer 3): on-chain AI-powered price
 # negotiation. propose_and_evaluate() runs GenLayer LLM consensus over the price
 # via the Equivalence Principle before any storage write commits.
+
+
+def _extract_json(text: typing.Any) -> typing.Any:
+    if isinstance(text, dict):
+        return text
+    if not isinstance(text, str):
+        return None
+    try:
+        return json.loads(text)
+    except (ValueError, TypeError):
+        pass
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        try:
+            return json.loads(text[start:end + 1])
+        except (ValueError, TypeError):
+            return None
+    return None
 
 
 class NegotiationEngine(gl.Contract):
@@ -24,13 +43,11 @@ class NegotiationEngine(gl.Contract):
     intent_map: TreeMap[str, str]       # negotiation_id -> intent_id
     ai_verdicts: TreeMap[str, str]      # negotiation_id -> raw AI verdict
 
-    # Enumeration index (DynArray not supported; TreeMap key must be str)
-    neg_count: u256
-    neg_index: TreeMap[str, str]        # str(index) -> negotiation_id
+    # Ordered enumeration of negotiation ids for pagination.
+    neg_ids: DynArray[str]
 
     def __init__(self) -> None:
         self.admin = gl.message.sender_address
-        self.neg_count = u256(0)
 
     # ---- internal ownership check ----
     def _can_settle(self, negotiation_id: str) -> bool:
@@ -113,12 +130,14 @@ class NegotiationEngine(gl.Contract):
                 '{"verdict": "accepted" | "rejected" | "counter", "counter_price": int}\n'
                 "Use counter_price 0 unless verdict is 'counter'."
             )
-            return gl.nondet.exec_prompt(prompt).replace("```json", "").replace("```", "")
+            return gl.nondet.exec_prompt(prompt)
 
         raw = gl.eq_principle.prompt_comparative(
             evaluate, "The 'verdict' field must be the same"
         )
-        parsed = json.loads(raw)
+        parsed = _extract_json(raw)
+        if not isinstance(parsed, dict):
+            parsed = {"verdict": "rejected"}
         v = str(parsed.get("verdict", "rejected")).lower()
         if v == "counter":
             # Defensively bound the LLM-suggested counter price: non-numeric,
@@ -137,9 +156,7 @@ class NegotiationEngine(gl.Contract):
             verdict_str = "rejected"
 
         # Append to enumeration index
-        idx = self.neg_count
-        self.neg_index[str(int(idx))] = negotiation_id
-        self.neg_count = idx + u256(1)
+        self.neg_ids.append(negotiation_id)
 
         # Apply AI verdict to storage
         self._apply_verdict(negotiation_id, verdict_str, proposed_price)
@@ -169,9 +186,7 @@ class NegotiationEngine(gl.Contract):
         self.intent_map[negotiation_id] = intent_id
         self.ai_verdicts[negotiation_id] = "manual"
 
-        idx = self.neg_count
-        self.neg_index[str(int(idx))] = negotiation_id
-        self.neg_count = idx + u256(1)
+        self.neg_ids.append(negotiation_id)
 
     @gl.public.write
     def accept(self, negotiation_id: str, final_price: u256) -> None:
@@ -190,24 +205,28 @@ class NegotiationEngine(gl.Contract):
 
     @gl.public.view
     def get_neg_count(self) -> u256:
-        return self.neg_count
+        return u256(len(self.neg_ids))
 
     @gl.public.view
     def get_neg_id_at(self, index: u256) -> str:
-        return self.neg_index.get(str(int(index)), "")
+        i = int(index)
+        if i < 0 or i >= len(self.neg_ids):
+            return ""
+        return self.neg_ids[i]
 
     @gl.public.view
-    def get_negotiation_data(self, negotiation_id: str) -> str:
-        """Returns pipe-delimited negotiation data string for frontend parsing."""
+    def get_negotiation_data(self, negotiation_id: str) -> dict:
+        """Full negotiation record. Empty dict if unknown."""
         if negotiation_id not in self.statuses:
-            return ""
-        status = self.statuses.get(negotiation_id, "unknown")
-        price = int(self.agreed_prices.get(negotiation_id, u256(0)))
-        provider = self.providers.get(negotiation_id, "")
-        requester = self.requesters.get(negotiation_id, "")
-        intent = self.intent_map.get(negotiation_id, "")
-        verdict = self.ai_verdicts.get(negotiation_id, "")
-        return f"status={status}|price={price}|provider={provider}|requester={requester}|intent={intent}|verdict={verdict}"
+            return {}
+        return {
+            "status": self.statuses.get(negotiation_id, "unknown"),
+            "price": str(self.agreed_prices.get(negotiation_id, u256(0))),
+            "provider": self.providers.get(negotiation_id, ""),
+            "requester": self.requesters.get(negotiation_id, ""),
+            "intent": self.intent_map.get(negotiation_id, ""),
+            "verdict": self.ai_verdicts.get(negotiation_id, ""),
+        }
 
     @gl.public.view
     def get_status(self, negotiation_id: str) -> str:

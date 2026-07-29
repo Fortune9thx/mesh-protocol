@@ -1,4 +1,3 @@
-# v0.2.16
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 from genlayer import *
 
@@ -22,12 +21,11 @@ class IntentRegistry(gl.Contract):
     requirements_map: TreeMap[str, str]     # intent_id -> comma-separated requirements
     priorities: TreeMap[str, str]           # intent_id -> low|medium|high|critical
 
-    # Enumeration index (DynArray not supported; TreeMap key must be str)
-    intent_count: u256
-    intent_index: TreeMap[str, str]         # str(index) -> intent_id
+    # Ordered enumeration of intent ids for pagination.
+    intent_ids: DynArray[str]
 
     def __init__(self) -> None:
-        self.intent_count = u256(0)
+        pass
 
     @gl.public.write
     def submit_intent(
@@ -53,10 +51,7 @@ class IntentRegistry(gl.Contract):
         self.requirements_map[intent_id] = requirements
         self.priorities[intent_id] = priority
 
-        # Append to enumeration index
-        idx = self.intent_count
-        self.intent_index[str(int(idx))] = intent_id
-        self.intent_count = idx + u256(1)
+        self.intent_ids.append(intent_id)
 
     @gl.public.write
     def update_status(self, intent_id: str, new_status: str) -> None:
@@ -77,26 +72,30 @@ class IntentRegistry(gl.Contract):
 
     @gl.public.view
     def get_intent_count(self) -> u256:
-        return self.intent_count
+        return u256(len(self.intent_ids))
 
     @gl.public.view
     def get_intent_id_at(self, index: u256) -> str:
-        return self.intent_index.get(str(int(index)), "")
+        i = int(index)
+        if i < 0 or i >= len(self.intent_ids):
+            return ""
+        return self.intent_ids[i]
 
     @gl.public.view
-    def get_intent_data(self, intent_id: str) -> str:
-        """Returns pipe-delimited intent data string for frontend parsing."""
+    def get_intent_data(self, intent_id: str) -> dict:
+        """Full intent record. Empty dict if the intent is unknown."""
         if intent_id not in self.requesters:
-            return ""
-        title = self.titles.get(intent_id, "")
-        desc = self.descriptions.get(intent_id, "")
-        reqs = self.requirements_map.get(intent_id, "")
-        priority = self.priorities.get(intent_id, "medium")
-        budget = int(self.budgets.get(intent_id, u256(0)))
-        deadline = int(self.deadlines.get(intent_id, u64(0)))
-        status = self.statuses.get(intent_id, "unknown")
-        requester = self.requesters[intent_id].as_hex
-        return f"title={title}|desc={desc}|reqs={reqs}|priority={priority}|budget={budget}|deadline={deadline}|status={status}|requester={requester}"
+            return {}
+        return {
+            "title": self.titles.get(intent_id, ""),
+            "description": self.descriptions.get(intent_id, ""),
+            "requirements": self.requirements_map.get(intent_id, ""),
+            "priority": self.priorities.get(intent_id, "medium"),
+            "budget": str(self.budgets.get(intent_id, u256(0))),
+            "deadline": int(self.deadlines.get(intent_id, u64(0))),
+            "status": self.statuses.get(intent_id, "unknown"),
+            "requester": self.requesters[intent_id].as_hex,
+        }
 
     @gl.public.view
     def get_status(self, intent_id: str) -> str:
