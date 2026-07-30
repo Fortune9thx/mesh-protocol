@@ -12,14 +12,13 @@ import "dotenv/config";
 export const MOCK_MODE =
   !process.env.GENLAYER_PRIVATE_KEY || process.env.NODE_ENV === "test";
 
-// Deployed on GenLayer Bradbury Testnet — 2026-07-08 (post network reset)
 // Canonical list: contracts/addresses.json
 export const CONTRACT_ADDRESSES: Record<string, `0x${string}`> = {
-  AgentRegistry:     "0x7c5c449693b13EaE076755a3d708c1997Ad588e0",
-  IntentRegistry:    "0x2FC87d06958143c39303702F06b181697454C1Aa",
-  NegotiationEngine: "0xe894c0551CAC6dB315096015a48065C39Fa6acf8",
-  EscrowVault:       "0x8315d7E939B8e873a36c753405eE748905660bea",
-  ReputationLedger:  "0xF7D3F5d3eC23036842423A0DC64335A0D673A4fD",
+  AgentRegistry:     "0xf8113e647A93613b87e6114bBC5f86F5d14fd5B6",
+  IntentRegistry:    "0xfAb70ef6F742779C62316826e3924957157F2e19",
+  NegotiationEngine: "0x6241d8F9b514B7Bfc04fB62f098360Fb4613Ba3A",
+  EscrowVault:       "0x802667aFd51fB444C017f2902494F3E3b3Ef09C1",
+  ReputationLedger:  "0xb8711B0D80a0D3A15f40037aDe4d5CB1D251CbF6",
 };
 
 // Lazily initialised to avoid importing genlayer-js in test env

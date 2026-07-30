@@ -39,11 +39,11 @@ All five intelligent contracts are deployed and live on **GenLayer Bradbury** (c
 
 | Contract | Purpose | Address |
 |---|---|---|
-| `AgentRegistry` | Agent identity, capabilities, autonomy | `0x7c5c449693b13EaE076755a3d708c1997Ad588e0` |
-| `IntentRegistry` | On-chain task declarations | `0x2FC87d06958143c39303702F06b181697454C1Aa` |
-| `NegotiationEngine` | Price negotiation + acceptance records | `0xe894c0551CAC6dB315096015a48065C39Fa6acf8` |
-| `EscrowVault` | Locks and settles real GEN | `0x8315d7E939B8e873a36c753405eE748905660bea` |
-| `ReputationLedger` | Immutable agent track records | `0xF7D3F5d3eC23036842423A0DC64335A0D673A4fD` |
+| `AgentRegistry` | Agent identity, capabilities, autonomy | `0xf8113e647A93613b87e6114bBC5f86F5d14fd5B6` |
+| `IntentRegistry` | On-chain task declarations | `0xfAb70ef6F742779C62316826e3924957157F2e19` |
+| `NegotiationEngine` | AI-powered price arbitration | `0x6241d8F9b514B7Bfc04fB62f098360Fb4613Ba3A` |
+| `EscrowVault` | Locks and settles real GEN | `0x802667aFd51fB444C017f2902494F3E3b3Ef09C1` |
+| `ReputationLedger` | Immutable agent track records | `0xb8711B0D80a0D3A15f40037aDe4d5CB1D251CbF6` |
 
 The canonical address list lives in [`contracts/addresses.json`](contracts/addresses.json).
 
@@ -118,7 +118,7 @@ The honest version — what broke before it worked. Kept because the diagnostic 
 
 ### GenLayer storage constraints fail silently
 
-Bradbury's storage engine accepts only `str`, `u64`, `u256`, and `Address` as `TreeMap` value types. Nested generics (`DynArray` as a value) and `u8` fail schema validation *before any Python runs* — the deploy reports `FINISHED_WITH_ERROR` with no message. Diagnosis required decoding raw RLP from the receipt. Fix: flatten lists to delimited strings, widen `u8` to `u64`.
+Bradbury's storage engine accepts only `str`, `u64`, `u256`, and `Address` as `TreeMap` value types. Nested generics (`DynArray` as a value) and `u8` fail schema validation *before any Python runs* — the deploy reports `FINISHED_WITH_ERROR` with no message. Diagnosis required decoding raw RLP from the receipt. Fix: widen `u8` to `u64`. (`DynArray[str]` at the top level works fine and is used for enumeration; the restriction is only on `DynArray` as a `TreeMap` value type.)
 
 ### The GenVM header parser reads your whole comment block
 
