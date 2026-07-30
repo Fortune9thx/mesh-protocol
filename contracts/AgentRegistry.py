@@ -40,6 +40,7 @@ class AgentRegistry(gl.Contract):
         autonomy_level: u64,
         spending_limit: u256,
     ) -> None:
+        assert len(agent_id) > 0, "Agent ID must not be empty"
         assert agent_id not in self.owner_map, "Agent already registered"
         assert autonomy_level <= u64(3), "Autonomy level must be 0-3"
 

@@ -1,7 +1,6 @@
 import type { TopologyNode, TopologyEdge, StreamEvent } from "./types";
 
-// TODO: wire to GET /agents + derived negotiations/escrows for real topology.
-// Mock topology data recreated from Mesh Protocol Overview.dc.html renderVals().
+// Demonstration topology data shown when the network has no registered agents.
 // Node tuple: [x, y, size, label, sub, tier, trust, load, confidence, contracts, meshId, status]
 const nodeTuples: [number, number, number, string, string, TopologyNode["tier"], number, number, number, number, string, TopologyNode["status"]][] = [
   [120, 120, 58, "trading-orch-01", "orchestrator · trading", "orchestrator", 98, 72, 96, 284, "0x7fA3…c92E", "active"],

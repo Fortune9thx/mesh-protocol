@@ -31,7 +31,7 @@ const activeChain = NETWORK === "studionet" ? studionet : bradbury;
 
 export const wagmiConfig = getDefaultConfig({
   appName: "Mesh Protocol",
-  projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID ?? "mesh-protocol-demo",
+  projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID ?? "",
   chains: [activeChain],
   ssr: true,
 });

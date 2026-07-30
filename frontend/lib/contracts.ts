@@ -13,11 +13,11 @@
 
 // ── Contract addresses (update after each redeploy) ──────────────────────────
 export const CONTRACT_ADDRESSES = {
-  AgentRegistry:     "0x26607aF8B3c6BA4BACD0072dbD6Ff3A034F4d295" as `0x${string}`,
-  IntentRegistry:    "0xC7d9cdED4D0AF762AD745703809055f9FACc8204" as `0x${string}`,
-  NegotiationEngine: "0xe53f3F8C5BB12aFB13A45012638B0b8EF39A64E8" as `0x${string}`,
-  EscrowVault:       "0x3d66EF39b5778e1D6bceF5252E7A01d54F25AaA7" as `0x${string}`,
-  ReputationLedger:  "0x1193B3637964EFd799946675e5F63168277bC074" as `0x${string}`,
+  AgentRegistry:     "0xf8113e647A93613b87e6114bBC5f86F5d14fd5B6" as `0x${string}`,
+  IntentRegistry:    "0xfAb70ef6F742779C62316826e3924957157F2e19" as `0x${string}`,
+  NegotiationEngine: "0x6241d8F9b514B7Bfc04fB62f098360Fb4613Ba3A" as `0x${string}`,
+  EscrowVault:       "0x802667aFd51fB444C017f2902494F3E3b3Ef09C1" as `0x${string}`,
+  ReputationLedger:  "0xb8711B0D80a0D3A15f40037aDe4d5CB1D251CbF6" as `0x${string}`,
 } as const;
 
 type ContractName = keyof typeof CONTRACT_ADDRESSES;
@@ -122,6 +122,7 @@ export async function fetchAgentIdAt(index: number): Promise<string> {
 export async function fetchAgentData(agentId: string) {
   const d = asRecord(await readContract("AgentRegistry", "get_agent_data", [agentId]));
   if (isEmpty(d)) return null;
+  const reliability = await fetchReliability(agentId);
   return {
     agent_id: agentId,
     name: d.name ?? agentId,
@@ -133,11 +134,8 @@ export async function fetchAgentData(agentId: string) {
     pricing_model: (d.pricing_model ?? "per_task") as "per_task" | "per_hour" | "flat" | "auction",
     base_price: Number(d.base_price ?? 0),
     owner_wallet: d.owner ?? "",
-    reliability_score: 80,
-    confidence_score: 0.85,
+    reliability_score: reliability,
     availability: d.status === "active",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
   };
 }
 
@@ -172,8 +170,6 @@ export async function fetchEscrowData(escrowId: string) {
     amount: Number(d.balance ?? 0) / 1e18,
     status: (d.status ?? "locked") as "locked" | "released" | "refunded" | "disputed",
     verdict: d.verdict ?? "",
-    created_at: new Date().toISOString(),
-    settled_at: null as string | null,
   };
 }
 
@@ -219,8 +215,6 @@ export async function fetchIntentData(intentId: string) {
     deadline: new Date(Number(d.deadline ?? 0) * 1000).toISOString(),
     status: (d.status ?? "pending") as import("./types").IntentStatus,
     requester: d.requester ?? "",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
   };
 }
 
@@ -238,13 +232,6 @@ export async function fetchNegotiationData(negId: string) {
     counter_price: null as number | null,
     status: (d.status ?? "pending") as import("./types").NegotiationStatus,
     ai_verdict: d.verdict ?? "",
-    round: 1,
-    max_rounds: 3,
-    quality_threshold: 0.85,
-    confidence_guarantee: 0.90,
-    deadline: new Date(Date.now() + 86400000).toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
   };
 }
 

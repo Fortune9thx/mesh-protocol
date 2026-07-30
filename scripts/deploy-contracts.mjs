@@ -11,7 +11,7 @@
  *   1. AgentRegistry
  *   2. IntentRegistry
  *   3. NegotiationEngine
- *   4. EscrowVault        (needs NegotiationEngine address -> patched before deploy)
+ *   4. EscrowVault        (constructor receives NegotiationEngine address)
  *   5. ReputationLedger
  *
  * After completion, copy the printed addresses into:
@@ -115,12 +115,12 @@ async function submitWithRetry(fn, label, tries = 10) {
   }
 }
 
-async function deployContract(name, codePath) {
+async function deployContract(name, codePath, arguments_ = []) {
   console.log(`\nDeploying ${name}...`);
   const code = fs.readFileSync(codePath, "utf8").replace(/\r\n/g, "\n");
   try {
     const tx = await submitWithRetry(
-      () => client.deployContract({ code, args: [], leaderOnly: false }),
+      () => client.deployContract({ code, args: arguments_.length ? arguments_ : [], leaderOnly: false }),
       name,
     );
     console.log(`  tx: ${tx}`);
@@ -181,20 +181,12 @@ addresses.NegotiationEngine = await deployContract(
 );
 await verifyDeployed("NegotiationEngine", addresses.NegotiationEngine, "get_neg_count");
 
-// 4. EscrowVault -- patch NegotiationEngine address into source before deploying
-const escrowSrc = fs.readFileSync(
+// 4. EscrowVault -- pass NegotiationEngine address as constructor arg
+addresses.EscrowVault = await deployContract(
+  "EscrowVault",
   path.join(ROOT, "contracts", "EscrowVault.py"),
-  "utf8",
+  [addresses.NegotiationEngine],
 );
-const patchedEscrow = escrowSrc.replace(
-  /NEGOTIATION_ENGINE_ADDRESS = Address\("0x[0-9a-fA-F]+"\)/,
-  `NEGOTIATION_ENGINE_ADDRESS = Address("${addresses.NegotiationEngine}")`,
-);
-const tmpEscrow = path.join(ROOT, "contracts", "_EscrowVault_patched.py");
-fs.writeFileSync(tmpEscrow, patchedEscrow, "utf8");
-
-addresses.EscrowVault = await deployContract("EscrowVault", tmpEscrow);
-fs.unlinkSync(tmpEscrow);
 await verifyDeployed("EscrowVault", addresses.EscrowVault, "get_escrow_count");
 
 // 5. ReputationLedger
@@ -224,13 +216,5 @@ fs.writeFileSync(
   "utf8",
 );
 console.log(`\nAddresses written to contracts/addresses.json and addresses.${NETWORK_KEY}.json`);
-
-// Patch EscrowVault.py permanently with the real NegotiationEngine address
-const finalEscrow = escrowSrc.replace(
-  /NEGOTIATION_ENGINE_ADDRESS = Address\("0x[0-9a-fA-F]+"\)/,
-  `NEGOTIATION_ENGINE_ADDRESS = Address("${addresses.NegotiationEngine}")`,
-);
-fs.writeFileSync(path.join(ROOT, "contracts", "EscrowVault.py"), finalEscrow, "utf8");
-console.log("EscrowVault.py patched with live NegotiationEngine address.");
 
 console.log("\nNext step: copy addresses into frontend/lib/contracts.ts");

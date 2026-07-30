@@ -38,6 +38,7 @@ class IntentRegistry(gl.Contract):
         budget: u256,
         deadline: u64,
     ) -> None:
+        assert len(intent_id) > 0, "Intent ID must not be empty"
         assert intent_id not in self.requesters, "Intent already exists"
         allowed_priorities = {"low", "medium", "high", "critical"}
         assert priority in allowed_priorities, "Invalid priority"

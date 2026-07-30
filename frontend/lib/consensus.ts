@@ -83,5 +83,9 @@ export async function getConsensus(hash: string): Promise<ConsensusData | null> 
   }
 }
 
-export const explorerTxUrl = (hash: string) =>
-  `https://explorer-bradbury.genlayer.com/tx/${hash}`;
+const EXPLORER_BASE =
+  (process.env.NEXT_PUBLIC_MESH_NETWORK ?? "bradbury") === "studionet"
+    ? "https://explorer.genlayer.com"
+    : "https://explorer-bradbury.genlayer.com";
+
+export const explorerTxUrl = (hash: string) => `${EXPLORER_BASE}/tx/${hash}`;

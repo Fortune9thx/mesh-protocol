@@ -14,13 +14,9 @@ export interface Agent {
   base_price: number;
   availability: boolean;
   reliability_score: number;
-  confidence_score: number;
-  endpoint_url?: string;
   status: AgentStatus;
   autonomy_level: number;
   spending_limit: number;
-  created_at: string;
-  updated_at: string;
 }
 
 export type IntentPriority = "low" | "medium" | "high" | "critical";
@@ -45,8 +41,6 @@ export interface Intent {
   deadline: string;
   priority: IntentPriority;
   status: IntentStatus;
-  created_at: string;
-  updated_at: string;
 }
 
 export type NegotiationStatus = "pending" | "counter" | "accepted" | "rejected" | "expired";
@@ -58,14 +52,8 @@ export interface Negotiation {
   provider_agent: string;
   proposed_price: number;
   counter_price: number | null;
-  deadline: string;
-  quality_threshold: number;
-  confidence_guarantee: number;
   status: NegotiationStatus;
-  round: number;
-  max_rounds: number;
-  created_at: string;
-  updated_at: string;
+  ai_verdict: string;
 }
 
 export type EscrowStatus = "locked" | "released" | "refunded" | "disputed";
@@ -78,8 +66,6 @@ export interface Escrow {
   amount: number;
   status: EscrowStatus;
   verdict?: string;
-  created_at: string;
-  settled_at: string | null;
 }
 
 export type EventType =

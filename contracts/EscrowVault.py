@@ -8,9 +8,6 @@ import typing
 # = a party; resolve_dispute outcome is decided by GenLayer validator consensus,
 # not by any caller. NEGOTIATION_ENGINE_ADDRESS is patched at deploy time.
 
-NEGOTIATION_ENGINE_ADDRESS = Address("0xe53f3F8C5BB12aFB13A45012638B0b8EF39A64E8")
-
-
 # Sending native GEN to an EOA (payer/payee wallets) is an EXTERNAL message and
 # must go through the EVM contract interface proxy, per GenLayer docs:
 #   _Recipient(Address(x)).emit_transfer(value=v)
@@ -51,6 +48,7 @@ class EscrowVault(gl.Contract):
     # ---- roles ----
     admin: Address
     arbitrators: TreeMap[str, u64]      # lowercased hex -> 1 if arbitrator
+    negotiation_engine: Address
 
     # ---- escrow state ----
     balances: TreeMap[str, u256]        # escrow_id -> amount (GEN wei)
@@ -68,8 +66,9 @@ class EscrowVault(gl.Contract):
     # Ordered enumeration of escrow ids for pagination.
     escrow_ids: DynArray[str]
 
-    def __init__(self) -> None:
+    def __init__(self, negotiation_engine: str) -> None:
         self.admin = gl.message.sender_address
+        self.negotiation_engine = Address(negotiation_engine)
 
     # ---- internal role check ----
     def _is_arbitrator(self, addr: Address) -> bool:
@@ -93,10 +92,16 @@ class EscrowVault(gl.Contract):
         assert gl.message.sender_address == self.admin, "Only admin may transfer"
         self.admin = Address(new_admin)
 
+    @gl.public.write
+    def set_negotiation_engine(self, addr: str) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may set negotiation engine"
+        self.negotiation_engine = Address(addr)
+
     # ---- escrow lifecycle ----
     @gl.public.write.payable
     def lock(self, escrow_id: str, payee: str, intent_id: str, negotiation_id: str) -> None:
         """Lock msg.value into escrow. Caller becomes the payer (requester)."""
+        assert len(escrow_id) > 0, "Escrow ID must not be empty"
         assert escrow_id not in self.statuses, "Escrow already exists"
         assert gl.message.value > u256(0), "Must send GEN to lock"
 
@@ -119,7 +124,7 @@ class EscrowVault(gl.Contract):
 
         neg_id = self.negotiation_map.get(escrow_id, "")
         if neg_id:
-            neg_engine = gl.get_contract_at(NEGOTIATION_ENGINE_ADDRESS)
+            neg_engine = gl.get_contract_at(self.negotiation_engine)
             neg_status = neg_engine.view().get_status(neg_id)
             assert neg_status == "accepted", f"Negotiation not accepted (status: {neg_status})"
 

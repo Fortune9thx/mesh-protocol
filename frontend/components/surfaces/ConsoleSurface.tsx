@@ -30,7 +30,6 @@ function agentToRow(agent: Agent): Row {
     name: agent.name,
     type: agent.category.toUpperCase(),
     trust: Math.round(agent.reliability_score),
-    // TODO: derive 24h spend from /escrows aggregated by payee once volume matters for the demo.
     spend: "$0",
     limit: `$${agent.spending_limit.toLocaleString()}`,
     // Backend Agent has no dispute/capped concept (that's design-system flavor from

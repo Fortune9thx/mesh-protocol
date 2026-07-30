@@ -143,7 +143,6 @@ function AgentProfileInner() {
             </div>
             <div className="mt-1.5 flex justify-between text-[11px] text-[#6B6B74]">
               <span>Reliability {agent.reliability_score}%</span>
-              <span>Confidence {agent.confidence_score}</span>
             </div>
           </div>
 
@@ -155,7 +154,6 @@ function AgentProfileInner() {
               ["Pricing model", agent.pricing_model.replace("_", " ")],
               ["Spending limit", `${agent.spending_limit} GEN`],
               ["Capabilities", agent.capabilities.join(", ") || "—"],
-              ["Registered", new Date(agent.created_at).toLocaleDateString()],
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between border-t border-[#212127] py-2 text-[12.5px] first:border-t-0">
                 <span className="text-[#6B6B74]">{k}</span>

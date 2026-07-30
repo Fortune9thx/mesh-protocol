@@ -28,7 +28,7 @@ function layoutNodes(agents: Agent[]): TopologyNode[] {
       size,
       trust: Math.round(agent.reliability_score),
       load: 0,
-      confidence: Math.round(agent.confidence_score),
+      confidence: Math.round(agent.reliability_score),
       contracts: 0,
       meshId: agent.owner_wallet,
       status: agent.status === "paused" ? "capped" : "active",

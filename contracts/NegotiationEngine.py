@@ -96,6 +96,7 @@ class NegotiationEngine(gl.Contract):
 
         The verdict is agreed across all validators before any storage commits.
         """
+        assert len(negotiation_id) > 0, "Negotiation ID must not be empty"
         assert negotiation_id not in self.statuses, "Negotiation already exists"
         assert len(intent_description) <= 4000, "Description too long (max 4000 chars)"
 
@@ -177,6 +178,7 @@ class NegotiationEngine(gl.Contract):
         defeating EscrowVault's 'negotiation must be accepted' release guard.
         """
         assert gl.message.sender_address == self.admin, "Only admin may record manually"
+        assert len(negotiation_id) > 0, "Negotiation ID must not be empty"
         assert negotiation_id not in self.statuses, "Already exists"
         self.statuses[negotiation_id] = "pending"
         self.agreed_prices[negotiation_id] = proposed_price
