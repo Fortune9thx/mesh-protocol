@@ -63,13 +63,43 @@ let fails = 0;
 const ok = (m) => console.log("  ✓", m);
 const bad = (m) => { console.log("  ✗", m); fails++; };
 
-async function fund(to, value) {
-  const h = await payerC.sendTransaction({ to, value });
-  await payerC.waitForTransactionReceipt({ hash: h, status: "ACCEPTED" });
+// Bradbury intermittently rejects submissions with "pipeline backpressure" --
+// retry with backoff instead of letting a transient RPC hiccup crash the run.
+async function withRetry(fn, label, attempts = 8) {
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const msg = String(err?.details || err?.shortMessage || err?.message || err);
+      const transient = msg.includes("pipeline backpressure") || msg.includes("node busy")
+        || msg.includes("Internal error") || msg.includes("Timed out waiting for transaction");
+      if (!transient || i === attempts) throw err;
+      const delay = Math.min(5000 * i, 20000);
+      console.log(`  ${label}: node busy (attempt ${i}/${attempts}) — retrying in ${delay / 1000}s`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
 }
-async function write(client, fn, args, value) {
-  const h = await client.writeContract({ address: A.EscrowVault, functionName: fn, args, ...(value ? { value } : {}) });
-  return client.waitForTransactionReceipt({ hash: h, status: "ACCEPTED" });
+
+// genlayer-js's own waitForTransactionReceipt defaults to interval=3000ms,
+// retries=10 -- a 30s window. Under sustained Bradbury congestion that's far
+// too short; a single call with a much longer sustained window (10s x 90 =
+// 15min) succeeds far more often than repeatedly resetting a 30s window via
+// outer retries, since it just keeps polling the SAME hash without resubmitting.
+const RECEIPT_OPTS = { status: "ACCEPTED", interval: 10_000, retries: 90 };
+
+async function fund(to, value) {
+  const h = await withRetry(() => payerC.sendTransaction({ to, value }), "fund");
+  console.log(`  fund tx submitted: ${h} — polling for receipt (up to 15min)…`);
+  await payerC.waitForTransactionReceipt({ hash: h, ...RECEIPT_OPTS });
+}
+async function write(client, fn, args, value, contract = A.EscrowVault) {
+  const h = await withRetry(
+    () => client.writeContract({ address: contract, functionName: fn, args, ...(value ? { value } : {}) }),
+    fn,
+  );
+  console.log(`  ${fn} tx submitted: ${h} — polling for receipt (up to 15min)…`);
+  return client.waitForTransactionReceipt({ hash: h, ...RECEIPT_OPTS });
 }
 async function mustRevert(label, client, fn, args) {
   try {
@@ -91,18 +121,18 @@ await fund(attacker.address, 20000000000000000n);
 //    set those up for real instead of passing free-text/empty values.
 console.log("0. Registering provider agent + intent + negotiation…");
 const AGENT_ID = `e2e-agent-${Date.now()}`;
-await write(payeeC, "register_agent", [AGENT_ID, "E2E Provider", "testing", "e2e", 0n, "per_task", 1n, 0n]);
+await write(payeeC, "register_agent", [AGENT_ID, "E2E Provider", "testing", "e2e", 0n, "per_task", 1n, 0n], undefined, A.AgentRegistry);
 const INTENT_ID = `e2e-intent-${Date.now()}`;
 await write(payerC, "submit_intent", [
   INTENT_ID, "E2E Test Intent", "desc", "req", "low", LOCK,
   BigInt(Math.floor(Date.now() / 1000) + 86400),
-]);
+], undefined, A.IntentRegistry);
 const NEG_ID = `e2e-neg-${Date.now()}`;
 // record_negotiation is admin-only; payer here IS the deployer/admin for
 // NegotiationEngine, so this sets a deterministic price without waiting on
 // LLM consensus timing in a test.
-await write(payerC, "record_negotiation", [NEG_ID, INTENT_ID, "e2e-requester", AGENT_ID, LOCK]);
-await write(payerC, "accept", [NEG_ID]);
+await write(payerC, "record_negotiation", [NEG_ID, INTENT_ID, "e2e-requester", AGENT_ID, LOCK], undefined, A.NegotiationEngine);
+await write(payerC, "accept", [NEG_ID], undefined, A.NegotiationEngine);
 
 // 1. Lock (payer), bound to the real intent + accepted negotiation above.
 console.log("1. Locking escrow…");

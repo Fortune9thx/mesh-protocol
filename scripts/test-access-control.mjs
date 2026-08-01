@@ -62,17 +62,38 @@ const attackerClient = createClient({ chain, account: attacker });
 
 console.log("Attacker wallet:", attacker.address);
 
+// genlayer-js's own waitForTransactionReceipt defaults to a 30s window
+// (interval=3000ms x retries=10) -- too short under sustained Bradbury
+// congestion. Give it one long sustained poll instead of bouncing.
+const RECEIPT_OPTS = { status: "ACCEPTED", interval: 10_000, retries: 90 };
+
+async function submitWithRetry(fn, label, attempts = 8) {
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const msg = String(err?.details || err?.shortMessage || err?.message || err);
+      const transient = msg.includes("pipeline backpressure") || msg.includes("node busy") || msg.includes("Internal error");
+      if (!transient || i === attempts) throw err;
+      const delay = Math.min(5000 * i, 20000);
+      console.log(`  ${label}: node busy (attempt ${i}/${attempts}) — retrying in ${delay / 1000}s`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+}
+
 // Best-effort: fund the attacker so writes reach execution (not gas-bounce).
 let funded = false;
 if (process.env.GENLAYER_PRIVATE_KEY) {
   try {
     const deployer = createAccount(process.env.GENLAYER_PRIVATE_KEY);
     const dClient = createClient({ chain, account: deployer });
-    const hash = await dClient.sendTransaction({
-      to: attacker.address,
-      value: 100000000000000000n, // 0.1 GEN
-    });
-    await dClient.waitForTransactionReceipt({ hash, status: "ACCEPTED" });
+    const hash = await submitWithRetry(
+      () => dClient.sendTransaction({ to: attacker.address, value: 100000000000000000n }), // 0.1 GEN
+      "fund attacker",
+    );
+    console.log(`Fund tx submitted: ${hash} — polling for receipt (up to 15min)…`);
+    await dClient.waitForTransactionReceipt({ hash, ...RECEIPT_OPTS });
     funded = true;
     console.log("Funded attacker with 0.1 GEN so writes reach execution.\n");
   } catch (e) {
@@ -85,10 +106,11 @@ let passed = 0, failed = 0, weak = 0;
 async function mustReject(label, contract, functionName, args) {
   process.stdout.write(`• ${label} ... `);
   try {
-    const hash = await attackerClient.writeContract({
-      address: addresses[contract], functionName, args,
-    });
-    const receipt = await attackerClient.waitForTransactionReceipt({ hash, status: "ACCEPTED" });
+    const hash = await submitWithRetry(
+      () => attackerClient.writeContract({ address: addresses[contract], functionName, args }),
+      label,
+    );
+    const receipt = await attackerClient.waitForTransactionReceipt({ hash, ...RECEIPT_OPTS });
     if (receipt?.txExecutionResultName === "FINISHED_WITH_ERROR") {
       console.log("PASS (executed, reverted on auth)");
       passed++;
