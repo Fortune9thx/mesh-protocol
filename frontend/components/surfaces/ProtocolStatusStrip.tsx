@@ -1,9 +1,32 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAgents } from "@/lib/useAgents";
 import { useDisputedEscrows } from "@/lib/useDisputedEscrows";
 import { useLiveEvents } from "@/lib/useLiveEvents";
+import { fetchPaused } from "@/lib/contracts";
+
+function PauseBanner() {
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const check = () => fetchPaused().then((p) => { if (mounted) setPaused(p); });
+    check();
+    const id = setInterval(check, 20_000);
+    return () => { mounted = false; clearInterval(id); };
+  }, []);
+
+  if (!paused) return null;
+  return (
+    <div role="alert" className="flex items-center gap-2.5 border-b border-[oklch(45%_0.1_75)] bg-[oklch(22%_0.05_75)] px-7 py-2">
+      <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-[oklch(78%_0.14_75)]" />
+      <span className="font-mono text-[10.5px] tracking-[0.08em] text-[oklch(85%_0.1_75)]">
+        PROTOCOL PAUSED — escrow locking, settlement, and disputes are temporarily disabled by the admin. Reads still work.
+      </span>
+    </div>
+  );
+}
 
 export function ProtocolStatusStrip() {
   const { agents } = useAgents();
@@ -20,6 +43,8 @@ export function ProtocolStatusStrip() {
   }, [events]);
 
   return (
+    <>
+    <PauseBanner />
     <div className="flex items-center gap-6 border-b border-[#212127] bg-[#0C0C0E] px-7 py-2">
       <div className="flex items-center gap-2">
         <span
@@ -64,5 +89,6 @@ export function ProtocolStatusStrip() {
         BRADBURY TESTNET · CHAIN 4221
       </div>
     </div>
+    </>
   );
 }

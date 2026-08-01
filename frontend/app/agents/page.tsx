@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { AppChrome } from "@/components/shell/AppChrome";
@@ -11,6 +11,7 @@ import { useAgents } from "@/lib/useAgents";
 import { useLiveEvents } from "@/lib/useLiveEvents";
 import { useWallet } from "@/lib/WalletProvider";
 import { pauseAgent } from "@/lib/api";
+import { fetchAgentStats } from "@/lib/contracts";
 
 const serif = { fontFamily: "var(--font-serif-display)" } as const;
 type Tab = "Reasoning trace" | "Negotiation history" | "Verification evidence";
@@ -28,6 +29,14 @@ function AgentProfileInner() {
     () => agents.find((a) => a.agent_id === wanted) ?? agents[0] ?? null,
     [agents, wanted],
   );
+
+  const [stats, setStats] = useState<{ total: number; success: number; failed: number; quality: number } | null>(null);
+  useEffect(() => {
+    if (!agent) { setStats(null); return; }
+    let mounted = true;
+    fetchAgentStats(agent.agent_id).then((s) => { if (mounted) setStats(s); });
+    return () => { mounted = false; };
+  }, [agent?.agent_id]);
 
   const myAgents = useMemo(
     () => agents.filter((a) => a.owner_wallet?.toLowerCase() === address?.toLowerCase()),
@@ -143,6 +152,23 @@ function AgentProfileInner() {
             </div>
             <div className="mt-1.5 flex justify-between text-[11px] text-[#6B6B74]">
               <span>Reliability {agent.reliability_score}%</span>
+            </div>
+
+            {/* Backed by ReputationLedger.report_from_escrow() -- every number
+                here is derived from real settled escrows, permissionlessly
+                and trustlessly, never taken on any single caller's word. */}
+            <div className="mt-4 grid grid-cols-4 gap-2 border-t border-[#212127] pt-3.5">
+              {[
+                ["Settled", stats?.total ?? 0],
+                ["Success", stats?.success ?? 0],
+                ["Failed", stats?.failed ?? 0],
+                ["Quality", stats ? `${stats.quality}%` : "—"],
+              ].map(([label, value]) => (
+                <div key={label as string}>
+                  <div className="font-mono text-[15px] tabular-nums text-[--mesh-white]">{value}</div>
+                  <div className="mt-0.5 text-[10px] uppercase tracking-[0.06em] text-[#6B6B74]">{label}</div>
+                </div>
+              ))}
             </div>
           </div>
 

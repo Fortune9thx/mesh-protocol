@@ -266,3 +266,21 @@ export async function fetchReliability(agentId: string): Promise<number> {
   const r = await readContract("ReputationLedger", "get_reliability", [agentId]);
   return Number(r ?? 80);
 }
+
+export async function fetchAgentStats(agentId: string) {
+  const d = asRecord(await readContract("ReputationLedger", "get_stats", [agentId]));
+  return {
+    total: Number(d.total ?? 0),
+    success: Number(d.success ?? 0),
+    failed: Number(d.failed ?? 0),
+    reliability: Number(d.reliability ?? 50),
+    quality: Number(d.quality ?? 50),
+  };
+}
+
+// ── Protocol status ────────────────────────────────────────────────────────────
+
+export async function fetchPaused(): Promise<boolean> {
+  const r = await readContract("EscrowVault", "get_paused", []);
+  return Boolean(r);
+}

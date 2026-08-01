@@ -11,6 +11,7 @@ import { useDisputedEscrows } from "@/lib/useDisputedEscrows";
 import { useWallet } from "@/lib/WalletProvider";
 import { fetchDispute } from "@/lib/contracts";
 import { submitEscrowEvidence, resolveDispute, reportReputationFromEscrow } from "@/lib/api";
+import { humanizeError } from "@/lib/errors";
 
 const serif = { fontFamily: "var(--font-serif-display)" } as const;
 const short = (s: string) => (s && s.length > 12 ? `${s.slice(0, 6)}…${s.slice(-4)}` : s);
@@ -56,7 +57,7 @@ function ChamberInner() {
       setEvidence("");
       setDispute(await fetchDispute(escrow.escrow_id));
     } else {
-      setError(r.error ?? "Could not submit evidence. Only a party to this escrow may submit.");
+      setError(humanizeError(r.error) || "Could not submit evidence. Only a party to this escrow may submit.");
     }
   };
 
@@ -72,7 +73,7 @@ function ChamberInner() {
       await refetch();
       reportReputationFromEscrow(escrow.escrow_id).catch(() => {});
     } else {
-      setError(r.error ?? "Resolution failed. Only a party or arbitrator may trigger consensus.");
+      setError(humanizeError(r.error) || "Resolution failed. Only a party or arbitrator may trigger consensus.");
     }
   };
 

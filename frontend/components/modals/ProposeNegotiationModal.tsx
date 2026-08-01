@@ -6,6 +6,7 @@ import { proposeNegotiation, lockEscrow } from "@/lib/api";
 import { fetchNegotiationData, fetchAllIntents, fetchAllAgents } from "@/lib/contracts";
 import { ProtocolNarrative } from "@/components/surfaces/ProtocolNarrative";
 import { useWallet } from "@/lib/WalletProvider";
+import { humanizeError } from "@/lib/errors";
 import type { Agent, Intent } from "@/lib/types";
 
 type Step = "negotiate" | "lock" | "done";
@@ -84,7 +85,7 @@ export function ProposeNegotiationModal({ onClose, onDone }: { onClose: () => vo
         setVerdict(verdictLabel(""));
       }
     } else {
-      setError(result.error ?? "Failed to propose negotiation");
+      setError(humanizeError(result.error) || "Failed to propose negotiation");
     }
     setSubmitting(false);
   };
@@ -106,7 +107,7 @@ export function ProposeNegotiationModal({ onClose, onDone }: { onClose: () => vo
       setStep("done");
       onDone?.();
     } else {
-      setError(result.error ?? "Failed to lock escrow");
+      setError(humanizeError(result.error) || "Failed to lock escrow");
     }
   };
 
