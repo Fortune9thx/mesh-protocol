@@ -181,11 +181,13 @@ addresses.NegotiationEngine = await deployContract(
 );
 await verifyDeployed("NegotiationEngine", addresses.NegotiationEngine, "get_neg_count");
 
-// 4. EscrowVault -- pass NegotiationEngine address as constructor arg
+// 4. EscrowVault -- pass NegotiationEngine, AgentRegistry, IntentRegistry
+//    addresses as constructor args (used to bind every escrow to on-chain
+//    ground truth: accepted negotiation, exact intent, registered parties)
 addresses.EscrowVault = await deployContract(
   "EscrowVault",
   path.join(ROOT, "contracts", "EscrowVault.py"),
-  [addresses.NegotiationEngine],
+  [addresses.NegotiationEngine, addresses.AgentRegistry, addresses.IntentRegistry],
 );
 await verifyDeployed("EscrowVault", addresses.EscrowVault, "get_escrow_count");
 

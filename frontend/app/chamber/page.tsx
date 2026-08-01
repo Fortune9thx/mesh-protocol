@@ -22,7 +22,7 @@ function ChamberInner() {
   const { address } = useWallet();
 
   const [evidence, setEvidence] = useState("");
-  const [dispute, setDispute] = useState<{ payer_evidence: string; payee_evidence: string; verdict: string } | null>(null);
+  const [dispute, setDispute] = useState<{ payer_evidence: string; payee_evidence: string; delivery_evidence: string; verdict: string } | null>(null);
   const [busy, setBusy] = useState<null | "evidence" | "resolve">(null);
   const [error, setError] = useState<string | null>(null);
   const [resolveHash, setResolveHash] = useState<string | null>(null);
@@ -139,6 +139,19 @@ function ChamberInner() {
           </div>
           <p className="min-h-[60px] text-[14px] leading-relaxed text-[#A8A7A1]">
             {dispute?.payer_evidence || <span className="text-[#6B6B74] italic">No statement submitted yet.</span>}
+          </p>
+        </div>
+      </div>
+
+      {/* immutable delivery evidence, submitted before the dispute existed */}
+      <div className="mx-auto mt-5 w-full max-w-[1100px] px-7">
+        <div className="rounded-2xl border border-[#212127] border-t-2 border-t-emerald-500/60 bg-[rgba(19,19,22,0.75)] p-6">
+          <div className="text-[22px]" style={serif}>Delivery record</div>
+          <div className="mb-4 mt-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6B6B74]">
+            Submitted by the provider on-chain, immutable, before this dispute existed
+          </div>
+          <p className="min-h-[40px] text-[14px] leading-relaxed text-[#A8A7A1]">
+            {dispute?.delivery_evidence || <span className="text-[#6B6B74] italic">No delivery evidence was ever submitted.</span>}
           </p>
         </div>
       </div>

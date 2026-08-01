@@ -66,6 +66,7 @@ export interface Escrow {
   amount: number;
   status: EscrowStatus;
   verdict?: string;
+  has_delivery: boolean;
 }
 
 export type EventType =

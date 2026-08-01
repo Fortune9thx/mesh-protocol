@@ -14,11 +14,11 @@ export const MOCK_MODE =
 
 // Canonical list: contracts/addresses.json
 export const CONTRACT_ADDRESSES: Record<string, `0x${string}`> = {
-  AgentRegistry:     "0xf8113e647A93613b87e6114bBC5f86F5d14fd5B6",
-  IntentRegistry:    "0xfAb70ef6F742779C62316826e3924957157F2e19",
-  NegotiationEngine: "0x6241d8F9b514B7Bfc04fB62f098360Fb4613Ba3A",
-  EscrowVault:       "0x802667aFd51fB444C017f2902494F3E3b3Ef09C1",
-  ReputationLedger:  "0xb8711B0D80a0D3A15f40037aDe4d5CB1D251CbF6",
+  AgentRegistry:     "0x1813d28DCE1a97C69D8a81674275672920f0D89c",
+  IntentRegistry:    "0x7d252ad8A536a43D518a3A1fE55DDc9B5831b3BD",
+  NegotiationEngine: "0xE94A830581727A4317e58b9aA61d435d5c6f15c0",
+  EscrowVault:       "0x896235Ef525EA648a111f171c328fe89C96eAb24",
+  ReputationLedger:  "0xd01728B2D7F101Fc22409349a9b06746454F05C8",
 };
 
 // Lazily initialised to avoid importing genlayer-js in test env

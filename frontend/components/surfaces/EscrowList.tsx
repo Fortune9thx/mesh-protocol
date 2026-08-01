@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDisputedEscrows } from "@/lib/useDisputedEscrows";
 import { useWallet } from "@/lib/WalletProvider";
-import { openEscrowDispute } from "@/lib/api";
+import { openEscrowDispute, submitDelivery, releaseEscrow, refundEscrow } from "@/lib/api";
 
 const short = (s: string) => (s && s.length > 12 ? `${s.slice(0, 6)}…${s.slice(-4)}` : s);
 
@@ -21,13 +21,15 @@ const statusTone: Record<string, string> = {
  * A party to a locked escrow can open a dispute (stating their case), which
  * routes to the Chamber for validator-consensus resolution.
  */
+type Action = "dispute" | "delivery";
+
 export function EscrowList() {
-  const { all } = useDisputedEscrows();
+  const { all, refetch } = useDisputedEscrows();
   const { address } = useWallet();
   const router = useRouter();
-  const [openFor, setOpenFor] = useState<string | null>(null);
+  const [openFor, setOpenFor] = useState<{ id: string; action: Action } | null>(null);
   const [evidence, setEvidence] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const mine = useMemo(() => {
@@ -38,18 +40,57 @@ export function EscrowList() {
 
   if (!address || mine.length === 0) return null;
 
-  const submit = async (escrowId: string) => {
+  const submitDispute = async (escrowId: string) => {
     if (!evidence.trim()) return;
-    setBusy(true);
+    setBusy(escrowId);
     setError(null);
     const r = await openEscrowDispute(escrowId, evidence.trim());
-    setBusy(false);
+    setBusy(null);
     if (r.ok) {
       setOpenFor(null);
       setEvidence("");
       router.push(`/chamber?escrow=${escrowId}`);
     } else {
       setError(r.error ?? "Could not open dispute. Only a party to the escrow may dispute.");
+    }
+  };
+
+  const submitDeliveryProof = async (escrowId: string) => {
+    if (!evidence.trim()) return;
+    setBusy(escrowId);
+    setError(null);
+    const r = await submitDelivery(escrowId, evidence.trim());
+    setBusy(null);
+    if (r.ok) {
+      setOpenFor(null);
+      setEvidence("");
+      await refetch();
+    } else {
+      setError(r.error ?? "Could not submit delivery evidence.");
+    }
+  };
+
+  const doRelease = async (escrowId: string) => {
+    setBusy(escrowId);
+    setError(null);
+    const r = await releaseEscrow(escrowId);
+    setBusy(null);
+    if (r.ok) {
+      await refetch();
+    } else {
+      setError(r.error ?? "Release failed. Delivery evidence must be submitted first.");
+    }
+  };
+
+  const doRefund = async (escrowId: string) => {
+    setBusy(escrowId);
+    setError(null);
+    const r = await refundEscrow(escrowId);
+    setBusy(null);
+    if (r.ok) {
+      await refetch();
+    } else {
+      setError(r.error ?? "Refund failed.");
     }
   };
 
@@ -79,21 +120,36 @@ export function EscrowList() {
 
               {e.status === "locked" && (
                 <div className="mt-2.5">
-                  {openFor === e.escrow_id ? (
+                  {openFor?.id === e.escrow_id ? (
                     <AnimatePresence>
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
                         <textarea
                           value={evidence}
                           onChange={(ev) => setEvidence(ev.target.value)}
                           rows={2}
-                          placeholder="State your case for the validators…"
+                          placeholder={
+                            openFor.action === "delivery"
+                              ? "Describe or link the completed work — this is stored immutably on-chain…"
+                              : "State your case for the validators…"
+                          }
                           className="w-full resize-none rounded-md border border-[#26262C] bg-[#131316] p-2.5 text-[12.5px] outline-none focus:border-[--mesh-red]"
                         />
                         {error && <div className="mt-1.5 text-[11px] text-[--mesh-red]">{error}</div>}
                         <div className="mt-2 flex gap-2">
-                          <button onClick={() => submit(e.escrow_id)} disabled={busy || !evidence.trim()}
-                            className="cursor-pointer rounded-md bg-[--mesh-red] px-3 py-1.5 text-[11.5px] font-semibold text-white disabled:opacity-40">
-                            {busy ? "Opening…" : "Open dispute"}
+                          <button
+                            onClick={() =>
+                              openFor.action === "delivery"
+                                ? submitDeliveryProof(e.escrow_id)
+                                : submitDispute(e.escrow_id)
+                            }
+                            disabled={busy === e.escrow_id || !evidence.trim()}
+                            className="cursor-pointer rounded-md bg-[--mesh-red] px-3 py-1.5 text-[11.5px] font-semibold text-white disabled:opacity-40"
+                          >
+                            {busy === e.escrow_id
+                              ? "Submitting…"
+                              : openFor.action === "delivery"
+                                ? "Submit delivery proof"
+                                : "Open dispute"}
                           </button>
                           <button onClick={() => { setOpenFor(null); setError(null); }}
                             className="cursor-pointer rounded-md border border-[#26262C] px-3 py-1.5 text-[11.5px] text-[#6B6B74]">
@@ -103,10 +159,37 @@ export function EscrowList() {
                       </motion.div>
                     </AnimatePresence>
                   ) : (
-                    <button onClick={() => { setOpenFor(e.escrow_id); setEvidence(""); }}
-                      className="cursor-pointer text-[11.5px] text-[#6B6B74] underline decoration-[#26262C] underline-offset-2 hover:text-[--mesh-red]">
-                      Open dispute
-                    </button>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                      {role === "payee" && !e.has_delivery && (
+                        <button onClick={() => { setOpenFor({ id: e.escrow_id, action: "delivery" }); setEvidence(""); }}
+                          className="cursor-pointer text-[11.5px] font-semibold text-[--mesh-blue] underline decoration-[#26262C] underline-offset-2">
+                          Submit delivery proof
+                        </button>
+                      )}
+                      {role === "payee" && e.has_delivery && (
+                        <span className="text-[11.5px] text-emerald-400">Delivery proof submitted</span>
+                      )}
+                      {role === "payer" && (
+                        <button onClick={() => doRelease(e.escrow_id)} disabled={busy === e.escrow_id || !e.has_delivery}
+                          title={!e.has_delivery ? "Waiting on the provider's delivery proof" : undefined}
+                          className="cursor-pointer text-[11.5px] font-semibold text-emerald-400 underline decoration-[#26262C] underline-offset-2 disabled:opacity-40 disabled:cursor-not-allowed">
+                          {busy === e.escrow_id ? "Releasing…" : "Release funds"}
+                        </button>
+                      )}
+                      {role === "payee" && (
+                        <button onClick={() => doRefund(e.escrow_id)} disabled={busy === e.escrow_id}
+                          className="cursor-pointer text-[11.5px] text-[#D9A13B] underline decoration-[#26262C] underline-offset-2 disabled:opacity-40">
+                          Refund requester
+                        </button>
+                      )}
+                      <button onClick={() => { setOpenFor({ id: e.escrow_id, action: "dispute" }); setEvidence(""); }}
+                        className="cursor-pointer text-[11.5px] text-[#6B6B74] underline decoration-[#26262C] underline-offset-2 hover:text-[--mesh-red]">
+                        Open dispute
+                      </button>
+                    </div>
+                  )}
+                  {error && openFor === null && (
+                    <div className="mt-1.5 text-[11px] text-[--mesh-red]">{error}</div>
                   )}
                 </div>
               )}

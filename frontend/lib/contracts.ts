@@ -13,11 +13,11 @@
 
 // ── Contract addresses (update after each redeploy) ──────────────────────────
 export const CONTRACT_ADDRESSES = {
-  AgentRegistry:     "0xf8113e647A93613b87e6114bBC5f86F5d14fd5B6" as `0x${string}`,
-  IntentRegistry:    "0xfAb70ef6F742779C62316826e3924957157F2e19" as `0x${string}`,
-  NegotiationEngine: "0x6241d8F9b514B7Bfc04fB62f098360Fb4613Ba3A" as `0x${string}`,
-  EscrowVault:       "0x802667aFd51fB444C017f2902494F3E3b3Ef09C1" as `0x${string}`,
-  ReputationLedger:  "0xb8711B0D80a0D3A15f40037aDe4d5CB1D251CbF6" as `0x${string}`,
+  AgentRegistry:     "0x1813d28DCE1a97C69D8a81674275672920f0D89c" as `0x${string}`,
+  IntentRegistry:    "0x7d252ad8A536a43D518a3A1fE55DDc9B5831b3BD" as `0x${string}`,
+  NegotiationEngine: "0xE94A830581727A4317e58b9aA61d435d5c6f15c0" as `0x${string}`,
+  EscrowVault:       "0x896235Ef525EA648a111f171c328fe89C96eAb24" as `0x${string}`,
+  ReputationLedger:  "0xd01728B2D7F101Fc22409349a9b06746454F05C8" as `0x${string}`,
 } as const;
 
 type ContractName = keyof typeof CONTRACT_ADDRESSES;
@@ -129,10 +129,10 @@ export async function fetchAgentData(agentId: string) {
     category: d.category ?? "general",
     capabilities: String(d.capabilities ?? "").split(",").filter(Boolean),
     status: (d.status ?? "active") as "active" | "paused" | "deactivated",
-    spending_limit: Number(d.spending_limit ?? 0),
+    spending_limit: Number(d.spending_limit ?? 0) / 1e18,
     autonomy_level: Number(d.autonomy_level ?? 1),
     pricing_model: (d.pricing_model ?? "per_task") as "per_task" | "per_hour" | "flat" | "auction",
-    base_price: Number(d.base_price ?? 0),
+    base_price: Number(d.base_price ?? 0) / 1e18,
     owner_wallet: d.owner ?? "",
     reliability_score: reliability,
     availability: d.status === "active",
@@ -170,6 +170,7 @@ export async function fetchEscrowData(escrowId: string) {
     amount: Number(d.balance ?? 0) / 1e18,
     status: (d.status ?? "locked") as "locked" | "released" | "refunded" | "disputed",
     verdict: d.verdict ?? "",
+    has_delivery: Boolean(d.has_delivery),
   };
 }
 
@@ -178,8 +179,19 @@ export async function fetchDispute(escrowId: string) {
   return {
     payer_evidence: d.payer_evidence ?? "",
     payee_evidence: d.payee_evidence ?? "",
+    delivery_evidence: d.delivery_evidence ?? "",
     verdict: d.verdict ?? "",
   };
+}
+
+export async function fetchDeliveryEvidence(escrowId: string): Promise<string> {
+  const r = await readContract("EscrowVault", "get_delivery_evidence", [escrowId]);
+  return (r as string) ?? "";
+}
+
+export async function fetchHasDelivery(escrowId: string): Promise<boolean> {
+  const r = await readContract("EscrowVault", "has_delivery_evidence", [escrowId]);
+  return Boolean(r);
 }
 
 export async function fetchAllEscrows() {
@@ -218,6 +230,15 @@ export async function fetchIntentData(intentId: string) {
   };
 }
 
+export async function fetchAllIntents() {
+  const count = await fetchIntentCount();
+  const ids = await Promise.all(
+    Array.from({ length: count }, (_, i) => fetchIntentIdAt(i)),
+  );
+  const intents = await Promise.all(ids.filter(Boolean).map(fetchIntentData));
+  return intents.filter(Boolean);
+}
+
 // ── NegotiationEngine ─────────────────────────────────────────────────────────
 
 export async function fetchNegotiationData(negId: string) {
@@ -229,6 +250,10 @@ export async function fetchNegotiationData(negId: string) {
     requester_agent: d.requester ?? "",
     provider_agent: d.provider ?? "",
     proposed_price: Number(d.price ?? 0) / 1e18,
+    // Exact wei string -- use this (not proposed_price, a lossy float) when
+    // locking escrow, since EscrowVault.lock() requires msg.value to equal
+    // the agreed price exactly.
+    agreed_price_wei: String(d.price ?? "0"),
     counter_price: null as number | null,
     status: (d.status ?? "pending") as import("./types").NegotiationStatus,
     ai_verdict: d.verdict ?? "",

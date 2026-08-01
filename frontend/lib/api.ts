@@ -227,17 +227,23 @@ export async function proposeNegotiation(payload: {
 
 // ── Escrow lock (payable — sends real GEN) ───────────────────────────────────
 
+/**
+ * Locks GEN into escrow. `amountWei` must equal the negotiation's agreed
+ * price EXACTLY -- EscrowVault.lock() asserts msg.value == agreed_price on
+ * NegotiationEngine, so this takes a wei string/bigint (not a rounded GEN
+ * float) to avoid any precision mismatch that would revert the transaction.
+ */
 export async function lockEscrow(payload: {
   escrowId: string;
   payee: string;
   intentId: string;
   negotiationId: string;
-  amountGen: number;
+  amountWei: bigint | string;
 }) {
   const err = requireWallet();
   if (err) return { ...err, status: 401, data: null };
 
-  const valueWei = BigInt(Math.round(payload.amountGen * 1e18));
+  const valueWei = BigInt(payload.amountWei);
   const result = await writeContract(
     _provider,
     _address!,
@@ -248,6 +254,67 @@ export async function lockEscrow(payload: {
   );
   return result.ok
     ? { ok: true, status: 200, data: { escrow_id: payload.escrowId } }
+    : { ok: false, status: 500, data: null, error: result.error };
+}
+
+/**
+ * Provider records immutable proof of delivery. Write-once on-chain --
+ * required before the payer can release funds (see EscrowVault.release()).
+ */
+export async function submitDelivery(escrowId: string, evidence: string) {
+  const err = requireWallet();
+  if (err) return { ...err, status: 401, data: null };
+
+  const result = await writeContract(
+    _provider,
+    _address!,
+    "EscrowVault",
+    "submit_delivery",
+    [escrowId, evidence],
+  );
+  return result.ok
+    ? { ok: true, status: 200, data: { hash: result.hash } }
+    : { ok: false, status: 500, data: null, error: result.error };
+}
+
+/**
+ * Release escrowed funds to the payee. Only the payer (or an arbitrator) may
+ * call this on-chain, and the contract requires delivery evidence to exist
+ * first (see EscrowVault.release()).
+ */
+export async function releaseEscrow(escrowId: string) {
+  const err = requireWallet();
+  if (err) return { ...err, status: 401, data: null };
+
+  const result = await writeContract(
+    _provider,
+    _address!,
+    "EscrowVault",
+    "release",
+    [escrowId],
+  );
+  return result.ok
+    ? { ok: true, status: 200, data: { hash: result.hash } }
+    : { ok: false, status: 500, data: null, error: result.error };
+}
+
+/**
+ * Refund escrowed funds to the payer. Only the payee (conceding provider) or
+ * an arbitrator may call this on-chain.
+ */
+export async function refundEscrow(escrowId: string) {
+  const err = requireWallet();
+  if (err) return { ...err, status: 401, data: null };
+
+  const result = await writeContract(
+    _provider,
+    _address!,
+    "EscrowVault",
+    "refund",
+    [escrowId],
+  );
+  return result.ok
+    ? { ok: true, status: 200, data: { hash: result.hash } }
     : { ok: false, status: 500, data: null, error: result.error };
 }
 
