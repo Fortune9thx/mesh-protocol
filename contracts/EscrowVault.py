@@ -58,10 +58,21 @@ class EscrowVault(gl.Contract):
 
     # ---- roles ----
     admin: Address
+    pending_admin: Address              # two-step transfer target
+    admin_transfer_pending: u64
     arbitrators: TreeMap[str, u64]      # lowercased hex -> 1 if arbitrator
+    paused: u64                         # 1 = lock/release/refund/dispute/resolve all blocked
+
+    # ---- dependency contracts (two-step propose/confirm to change) ----
     negotiation_engine: Address
     agent_registry: Address
     intent_registry: Address
+    pending_negotiation_engine: Address
+    pending_agent_registry: Address
+    pending_intent_registry: Address
+    negotiation_engine_change_pending: u64
+    agent_registry_change_pending: u64
+    intent_registry_change_pending: u64
 
     # ---- escrow state ----
     balances: TreeMap[str, u256]        # escrow_id -> amount (GEN wei)
@@ -70,6 +81,7 @@ class EscrowVault(gl.Contract):
     statuses: TreeMap[str, str]         # escrow_id -> locked|released|refunded|disputed
     intent_map: TreeMap[str, str]       # escrow_id -> intent_id
     negotiation_map: TreeMap[str, str]  # escrow_id -> negotiation_id
+    negotiation_used: TreeMap[str, str] # negotiation_id -> escrow_id (one-to-one; blocks double-lock)
 
     # ---- dispute state ----
     payer_evidence: TreeMap[str, str]   # escrow_id -> requester's case
@@ -105,25 +117,90 @@ class EscrowVault(gl.Contract):
         assert gl.message.sender_address == self.admin, "Only admin may remove arbitrators"
         self.arbitrators[Address(arbitrator).as_hex.lower()] = u64(0)
 
+    # ---- admin transfer (two-step: the NEW admin must independently confirm
+    # with their own transaction, so a single compromised/mistyped proposal
+    # can never silently take effect) ----
     @gl.public.write
-    def transfer_admin(self, new_admin: str) -> None:
-        assert gl.message.sender_address == self.admin, "Only admin may transfer"
-        self.admin = Address(new_admin)
+    def propose_transfer_admin(self, new_admin: str) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may propose a transfer"
+        self.pending_admin = Address(new_admin)
+        self.admin_transfer_pending = u64(1)
 
     @gl.public.write
-    def set_negotiation_engine(self, addr: str) -> None:
-        assert gl.message.sender_address == self.admin, "Only admin may set negotiation engine"
-        self.negotiation_engine = Address(addr)
+    def confirm_transfer_admin(self) -> None:
+        assert gl.message.sender_address == self.pending_admin, \
+            "Only the proposed new admin may confirm"
+        assert self.admin_transfer_pending == u64(1), "No transfer pending"
+        self.admin = self.pending_admin
+        self.admin_transfer_pending = u64(0)
 
     @gl.public.write
-    def set_agent_registry(self, addr: str) -> None:
-        assert gl.message.sender_address == self.admin, "Only admin may set agent registry"
-        self.agent_registry = Address(addr)
+    def cancel_transfer_admin(self) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may cancel"
+        self.admin_transfer_pending = u64(0)
+
+    # ---- dependency contract addresses (two-step propose/confirm, two
+    # separate admin transactions, so the trust root underlying every
+    # lock() binding check can never be silently repointed in one tx) ----
+    @gl.public.write
+    def propose_set_negotiation_engine(self, addr: str) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may propose"
+        self.pending_negotiation_engine = Address(addr)
+        self.negotiation_engine_change_pending = u64(1)
 
     @gl.public.write
-    def set_intent_registry(self, addr: str) -> None:
-        assert gl.message.sender_address == self.admin, "Only admin may set intent registry"
-        self.intent_registry = Address(addr)
+    def confirm_set_negotiation_engine(self) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may confirm"
+        assert self.negotiation_engine_change_pending == u64(1), "No change pending"
+        self.negotiation_engine = self.pending_negotiation_engine
+        self.negotiation_engine_change_pending = u64(0)
+
+    @gl.public.write
+    def cancel_set_negotiation_engine(self) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may cancel"
+        self.negotiation_engine_change_pending = u64(0)
+
+    @gl.public.write
+    def propose_set_agent_registry(self, addr: str) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may propose"
+        self.pending_agent_registry = Address(addr)
+        self.agent_registry_change_pending = u64(1)
+
+    @gl.public.write
+    def confirm_set_agent_registry(self) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may confirm"
+        assert self.agent_registry_change_pending == u64(1), "No change pending"
+        self.agent_registry = self.pending_agent_registry
+        self.agent_registry_change_pending = u64(0)
+
+    @gl.public.write
+    def cancel_set_agent_registry(self) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may cancel"
+        self.agent_registry_change_pending = u64(0)
+
+    @gl.public.write
+    def propose_set_intent_registry(self, addr: str) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may propose"
+        self.pending_intent_registry = Address(addr)
+        self.intent_registry_change_pending = u64(1)
+
+    @gl.public.write
+    def confirm_set_intent_registry(self) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may confirm"
+        assert self.intent_registry_change_pending == u64(1), "No change pending"
+        self.intent_registry = self.pending_intent_registry
+        self.intent_registry_change_pending = u64(0)
+
+    @gl.public.write
+    def cancel_set_intent_registry(self) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may cancel"
+        self.intent_registry_change_pending = u64(0)
+
+    # ---- circuit breaker ----
+    @gl.public.write
+    def set_paused(self, value: bool) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may pause/unpause"
+        self.paused = u64(1) if value else u64(0)
 
     # ---- escrow lifecycle ----
     @gl.public.write.payable
@@ -139,11 +216,18 @@ class EscrowVault(gl.Contract):
         registered (active) owner wallet, and msg.value must equal the
         negotiation's agreed price exactly.
         """
+        assert self.paused == u64(0), "EscrowVault is paused"
         assert len(escrow_id) > 0, "Escrow ID must not be empty"
         assert escrow_id not in self.statuses, "Escrow already exists"
         assert len(negotiation_id) > 0, "Negotiation ID must not be empty"
         assert len(intent_id) > 0, "Intent ID must not be empty"
         assert gl.message.value > u256(0), "Must send GEN to lock"
+        # One-to-one invariant: a single accepted negotiation may only ever
+        # back a single escrow. Without this, the same accepted negotiation
+        # could be locked multiple times, letting a provider claim payment
+        # more than once for what should be a single deliverable.
+        assert negotiation_id not in self.negotiation_used, \
+            "This negotiation has already been locked into an escrow"
 
         # ---- accepted negotiation ----
         neg_engine = gl.get_contract_at(self.negotiation_engine)
@@ -185,6 +269,7 @@ class EscrowVault(gl.Contract):
         self.statuses[escrow_id] = "locked"
         self.intent_map[escrow_id] = intent_id
         self.negotiation_map[escrow_id] = negotiation_id
+        self.negotiation_used[negotiation_id] = escrow_id
 
         self.escrow_ids.append(escrow_id)
 
@@ -195,6 +280,7 @@ class EscrowVault(gl.Contract):
         edited or overwritten once submitted, so it can be trusted as evidence
         during settlement and, if disputed, during arbitration.
         """
+        assert self.paused == u64(0), "EscrowVault is paused"
         assert self.statuses.get(escrow_id, "") == "locked", "Escrow not locked"
         assert len(evidence) > 0, "Delivery evidence must not be empty"
         assert len(evidence) <= 4000, "Delivery evidence too long (max 4000 chars)"
@@ -215,6 +301,7 @@ class EscrowVault(gl.Contract):
         is independently confirmed) since that role already carries elevated
         trust for dispute resolution.
         """
+        assert self.paused == u64(0), "EscrowVault is paused"
         assert self.statuses.get(escrow_id, "") == "locked", "Escrow not locked"
         caller = gl.message.sender_address
         is_payer = caller == self.payers[escrow_id]
@@ -238,6 +325,7 @@ class EscrowVault(gl.Contract):
     @gl.public.write
     def refund(self, escrow_id: str) -> None:
         """Refund to payer. Payee (conceding provider) or arbitrator only."""
+        assert self.paused == u64(0), "EscrowVault is paused"
         assert self.statuses.get(escrow_id, "") == "locked", "Escrow not locked"
         caller = gl.message.sender_address
         assert caller == self.payees[escrow_id] or self._is_arbitrator(caller), \
@@ -252,6 +340,7 @@ class EscrowVault(gl.Contract):
     @gl.public.write
     def dispute(self, escrow_id: str, evidence: str) -> None:
         """Open a dispute. Only a party to the escrow, who states their case."""
+        assert self.paused == u64(0), "EscrowVault is paused"
         assert self.statuses.get(escrow_id, "") == "locked", "Escrow not locked"
         assert len(evidence) <= 4000, "Evidence too long (max 4000 chars)"
         caller = gl.message.sender_address
@@ -268,6 +357,7 @@ class EscrowVault(gl.Contract):
     @gl.public.write
     def submit_evidence(self, escrow_id: str, evidence: str) -> None:
         """The responding party adds their side before resolution."""
+        assert self.paused == u64(0), "EscrowVault is paused"
         assert self.statuses.get(escrow_id, "") == "disputed", "Escrow not disputed"
         assert len(evidence) <= 4000, "Evidence too long (max 4000 chars)"
         caller = gl.message.sender_address
@@ -287,6 +377,7 @@ class EscrowVault(gl.Contract):
         GenLayer validators run LLM consensus over both parties' evidence and
         agree on 'release' or 'refund' before any funds move.
         """
+        assert self.paused == u64(0), "EscrowVault is paused"
         assert self.statuses.get(escrow_id, "") == "disputed", "Not disputed"
         caller = gl.message.sender_address
         is_party = caller == self.payers[escrow_id] or caller == self.payees[escrow_id]
@@ -419,3 +510,11 @@ class EscrowVault(gl.Contract):
     @gl.public.view
     def get_balance(self, escrow_id: str) -> u256:
         return self.balances.get(escrow_id, u256(0))
+
+    @gl.public.view
+    def get_negotiation_id(self, escrow_id: str) -> str:
+        return self.negotiation_map.get(escrow_id, "")
+
+    @gl.public.view
+    def get_paused(self) -> bool:
+        return self.paused == u64(1)

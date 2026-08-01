@@ -106,11 +106,14 @@ async function mustReject(label, contract, functionName, args) {
 await mustReject("ReputationLedger.record_outcome by non-writer", "ReputationLedger", "record_outcome", ["agent-victim", true, 100n]);
 await mustReject("ReputationLedger.authorize_writer by non-admin", "ReputationLedger", "authorize_writer", [attacker.address]);
 await mustReject("ReputationLedger.revoke_writer by non-admin", "ReputationLedger", "revoke_writer", [attacker.address]);
-await mustReject("ReputationLedger.transfer_admin by non-admin", "ReputationLedger", "transfer_admin", [attacker.address]);
+await mustReject("ReputationLedger.propose_transfer_admin by non-admin", "ReputationLedger", "propose_transfer_admin", [attacker.address]);
 await mustReject("EscrowVault.add_arbitrator by non-admin", "EscrowVault", "add_arbitrator", [attacker.address]);
 await mustReject("EscrowVault.remove_arbitrator by non-admin", "EscrowVault", "remove_arbitrator", [attacker.address]);
-await mustReject("EscrowVault.transfer_admin by non-admin", "EscrowVault", "transfer_admin", [attacker.address]);
+await mustReject("EscrowVault.propose_transfer_admin by non-admin", "EscrowVault", "propose_transfer_admin", [attacker.address]);
+await mustReject("EscrowVault.propose_set_negotiation_engine by non-admin", "EscrowVault", "propose_set_negotiation_engine", [attacker.address]);
+await mustReject("EscrowVault.set_paused by non-admin", "EscrowVault", "set_paused", [true]);
 await mustReject("NegotiationEngine.record_negotiation by non-admin", "NegotiationEngine", "record_negotiation", ["neg-x", "int-x", "req", "prov", 1n]);
+await mustReject("NegotiationEngine.propose_transfer_admin by non-admin", "NegotiationEngine", "propose_transfer_admin", [attacker.address]);
 
 console.log(`\nResult: ${passed} passed, ${failed} failed${weak ? ` (${weak} weak — attacker unfunded)` : ""}.`);
 if (failed > 0) {

@@ -174,10 +174,12 @@ addresses.IntentRegistry = await deployContract(
 );
 await verifyDeployed("IntentRegistry", addresses.IntentRegistry, "get_intent_count");
 
-// 3. NegotiationEngine
+// 3. NegotiationEngine -- pass AgentRegistry address (verifies provider
+//    wallets on accept()/reject() and enforces requester agent spending caps)
 addresses.NegotiationEngine = await deployContract(
   "NegotiationEngine",
   path.join(ROOT, "contracts", "NegotiationEngine.py"),
+  [addresses.AgentRegistry],
 );
 await verifyDeployed("NegotiationEngine", addresses.NegotiationEngine, "get_neg_count");
 
@@ -191,10 +193,12 @@ addresses.EscrowVault = await deployContract(
 );
 await verifyDeployed("EscrowVault", addresses.EscrowVault, "get_escrow_count");
 
-// 5. ReputationLedger
+// 5. ReputationLedger -- pass EscrowVault + NegotiationEngine addresses so
+//    report_from_escrow() can permissionlessly verify settlement outcomes
 addresses.ReputationLedger = await deployContract(
   "ReputationLedger",
   path.join(ROOT, "contracts", "ReputationLedger.py"),
+  [addresses.EscrowVault, addresses.NegotiationEngine],
 );
 await verifyDeployed("ReputationLedger", addresses.ReputationLedger, "get_admin");
 

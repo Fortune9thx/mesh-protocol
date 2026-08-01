@@ -39,11 +39,11 @@ All five intelligent contracts are deployed and live on **GenLayer Bradbury** (c
 
 | Contract | Purpose | Address |
 |---|---|---|
-| `AgentRegistry` | Agent identity, capabilities, autonomy | `0x1813d28DCE1a97C69D8a81674275672920f0D89c` |
-| `IntentRegistry` | On-chain task declarations | `0x7d252ad8A536a43D518a3A1fE55DDc9B5831b3BD` |
-| `NegotiationEngine` | AI-powered price arbitration | `0xE94A830581727A4317e58b9aA61d435d5c6f15c0` |
-| `EscrowVault` | Locks and settles real GEN, binds each escrow to the registered parties, exact intent, accepted negotiation, and agreed amount | `0x896235Ef525EA648a111f171c328fe89C96eAb24` |
-| `ReputationLedger` | Immutable agent track records | `0xd01728B2D7F101Fc22409349a9b06746454F05C8` |
+| `AgentRegistry` | Agent identity, capabilities, autonomy, spending caps | `0x904Afb0135C4328eE0DAb009349632FEE08df1Df` |
+| `IntentRegistry` | On-chain task declarations | `0xC7519fd60F587ED611F4Bf37cC1F206c644F1Ac8` |
+| `NegotiationEngine` | AI-powered price arbitration; enforces agent spending caps; verdict cannot be overridden by any caller | `0x12189fBA8e6cD95301Bb7EBcA957BEa8217eb3D5` |
+| `EscrowVault` | Locks and settles real GEN, binds each escrow to the registered parties, exact intent, accepted negotiation, and agreed amount; pausable; two-step admin controls | `0x87838E5ed4B969b74f9E34EfF333DF5835989307` |
+| `ReputationLedger` | Immutable agent track records; permissionlessly, trustlessly updated from real settlement outcomes | `0xA61fba6e1c09DEC544D2B2d40C1b682c0f2D8D60` |
 
 The canonical address list lives in [`contracts/addresses.json`](contracts/addresses.json).
 

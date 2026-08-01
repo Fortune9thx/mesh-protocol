@@ -35,6 +35,10 @@ class NegotiationEngine(gl.Contract):
     """
 
     admin: Address                      # deployer; may override negotiation state
+    pending_admin: Address              # two-step transfer target (zero-equivalent until proposed)
+    admin_transfer_pending: u64         # 1 if a transfer_admin proposal is awaiting confirm_transfer_admin
+    agent_registry: Address             # immutable -- used to verify provider wallets and spending caps
+
     statuses: TreeMap[str, str]         # negotiation_id -> status
     agreed_prices: TreeMap[str, u256]   # negotiation_id -> final price
     providers: TreeMap[str, str]        # negotiation_id -> provider agent_id
@@ -46,15 +50,50 @@ class NegotiationEngine(gl.Contract):
     # Ordered enumeration of negotiation ids for pagination.
     neg_ids: DynArray[str]
 
-    def __init__(self) -> None:
+    def __init__(self, agent_registry: str) -> None:
         self.admin = gl.message.sender_address
+        self.agent_registry = Address(agent_registry)
 
     # ---- internal ownership check ----
     def _can_settle(self, negotiation_id: str) -> bool:
+        """
+        Who may confirm/reject a pending or countered negotiation: the original
+        proposer, the negotiation's provider agent's REAL registered owner
+        wallet (verified via AgentRegistry, not the free-text agent_id string),
+        or admin. Neither path can change the price -- see accept().
+        """
         caller = gl.message.sender_address
         if caller == self.admin:
             return True
-        return self.proposers.get(negotiation_id, "") == caller.as_hex.lower()
+        if self.proposers.get(negotiation_id, "") == caller.as_hex.lower():
+            return True
+        provider_id = self.providers.get(negotiation_id, "")
+        if provider_id:
+            agent_reg = gl.get_contract_at(self.agent_registry)
+            provider_wallet = agent_reg.view().get_owner(provider_id)
+            if provider_wallet != "" and caller.as_hex.lower() == provider_wallet.lower():
+                return True
+        return False
+
+    # ---- admin transfer (two-step: propose then confirm, two separate txs) ----
+    @gl.public.write
+    def propose_transfer_admin(self, new_admin: str) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may propose a transfer"
+        self.pending_admin = Address(new_admin)
+        self.admin_transfer_pending = u64(1)
+
+    @gl.public.write
+    def confirm_transfer_admin(self) -> None:
+        assert gl.message.sender_address == self.pending_admin, \
+            "Only the proposed new admin may confirm"
+        assert self.admin_transfer_pending == u64(1), "No transfer pending"
+        self.admin = self.pending_admin
+        self.admin_transfer_pending = u64(0)
+
+    @gl.public.write
+    def cancel_transfer_admin(self) -> None:
+        assert gl.message.sender_address == self.admin, "Only admin may cancel"
+        self.admin_transfer_pending = u64(0)
 
     # ---- Helper (must be defined before callers per GenVM static analyser) ----
 
@@ -99,6 +138,21 @@ class NegotiationEngine(gl.Contract):
         assert len(negotiation_id) > 0, "Negotiation ID must not be empty"
         assert negotiation_id not in self.statuses, "Negotiation already exists"
         assert len(intent_description) <= 4000, "Description too long (max 4000 chars)"
+
+        # Autonomous safety rail: if `requester` resolves to a real registered
+        # agent, its configured spending_limit is enforced here -- BEFORE any
+        # LLM call -- so an autonomous agent (autonomy_level >= 2) can never
+        # commit to a price beyond what its owner configured, regardless of
+        # what the AI or a later accept() confirms. Unregistered / free-text
+        # requester strings (a human-driven negotiation) are not capped, since
+        # a human is presumed to already be exercising judgment via their
+        # wallet signature.
+        agent_reg = gl.get_contract_at(self.agent_registry)
+        requester_owner = agent_reg.view().get_owner(requester)
+        if requester_owner != "":
+            cap = agent_reg.view().get_spending_limit(requester)
+            assert proposed_price <= cap, \
+                f"Proposed price exceeds requester agent's configured spending limit ({cap} wei)"
 
         # Record parties before non-deterministic block
         self.providers[negotiation_id] = provider
@@ -209,15 +263,25 @@ class NegotiationEngine(gl.Contract):
         self.neg_ids.append(negotiation_id)
 
     @gl.public.write
-    def accept(self, negotiation_id: str, final_price: u256) -> None:
-        assert self._can_settle(negotiation_id), "Only the proposer or admin may accept"
+    def accept(self, negotiation_id: str) -> None:
+        """
+        Confirm a pending/countered negotiation at the price the AI already
+        determined. Deliberately takes NO price argument -- accept() cannot
+        change agreed_prices[negotiation_id], only transition status. This is
+        the fix for a real vulnerability: the original version let the
+        proposer (or admin) call accept() with an arbitrary caller-supplied
+        price, completely bypassing the AI's verdict with zero counter-party
+        confirmation.
+        """
+        assert self._can_settle(negotiation_id), \
+            "Only the proposer, the provider's registered owner, or admin may accept"
         assert self.statuses.get(negotiation_id, "") in {"pending", "counter"}, "Invalid state"
         self.statuses[negotiation_id] = "accepted"
-        self.agreed_prices[negotiation_id] = final_price
 
     @gl.public.write
     def reject(self, negotiation_id: str) -> None:
-        assert self._can_settle(negotiation_id), "Only the proposer or admin may reject"
+        assert self._can_settle(negotiation_id), \
+            "Only the proposer, the provider's registered owner, or admin may reject"
         assert self.statuses.get(negotiation_id, "") in {"pending", "counter"}, "Invalid state"
         self.statuses[negotiation_id] = "rejected"
 

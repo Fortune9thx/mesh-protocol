@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDisputedEscrows } from "@/lib/useDisputedEscrows";
 import { useWallet } from "@/lib/WalletProvider";
-import { openEscrowDispute, submitDelivery, releaseEscrow, refundEscrow } from "@/lib/api";
+import { openEscrowDispute, submitDelivery, releaseEscrow, refundEscrow, reportReputationFromEscrow } from "@/lib/api";
 
 const short = (s: string) => (s && s.length > 12 ? `${s.slice(0, 6)}…${s.slice(-4)}` : s);
 
@@ -77,6 +77,10 @@ export function EscrowList() {
     setBusy(null);
     if (r.ok) {
       await refetch();
+      // Best-effort, permissionless reputation update -- the ledger verifies
+      // this itself via view() calls, so a failure here (e.g. someone else
+      // already reported it) doesn't affect the release that already succeeded.
+      reportReputationFromEscrow(escrowId).catch(() => {});
     } else {
       setError(r.error ?? "Release failed. Delivery evidence must be submitted first.");
     }
@@ -89,6 +93,7 @@ export function EscrowList() {
     setBusy(null);
     if (r.ok) {
       await refetch();
+      reportReputationFromEscrow(escrowId).catch(() => {});
     } else {
       setError(r.error ?? "Refund failed.");
     }

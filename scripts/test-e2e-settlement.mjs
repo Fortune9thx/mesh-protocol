@@ -86,9 +86,27 @@ console.log("Funding payee + attacker…");
 await fund(payee.address, 20000000000000000n);
 await fund(attacker.address, 20000000000000000n);
 
-// 1. Lock (payer). Empty negotiation_id so the release guard isn't required for the dispute path.
+// 0. lock() now binds every escrow to on-chain ground truth (accepted
+//    negotiation, exact intent, registered provider, agreed amount) --
+//    set those up for real instead of passing free-text/empty values.
+console.log("0. Registering provider agent + intent + negotiation…");
+const AGENT_ID = `e2e-agent-${Date.now()}`;
+await write(payeeC, "register_agent", [AGENT_ID, "E2E Provider", "testing", "e2e", 0n, "per_task", 1n, 0n]);
+const INTENT_ID = `e2e-intent-${Date.now()}`;
+await write(payerC, "submit_intent", [
+  INTENT_ID, "E2E Test Intent", "desc", "req", "low", LOCK,
+  BigInt(Math.floor(Date.now() / 1000) + 86400),
+]);
+const NEG_ID = `e2e-neg-${Date.now()}`;
+// record_negotiation is admin-only; payer here IS the deployer/admin for
+// NegotiationEngine, so this sets a deterministic price without waiting on
+// LLM consensus timing in a test.
+await write(payerC, "record_negotiation", [NEG_ID, INTENT_ID, "e2e-requester", AGENT_ID, LOCK]);
+await write(payerC, "accept", [NEG_ID]);
+
+// 1. Lock (payer), bound to the real intent + accepted negotiation above.
 console.log("1. Locking escrow…");
-await write(payerC, "lock", [ESCROW, payee.address, "intent-e2e", ""], LOCK);
+await write(payerC, "lock", [ESCROW, payee.address, INTENT_ID, NEG_ID], LOCK);
 const st1 = await readC.readContract({ address: A.EscrowVault, functionName: "get_status", args: [ESCROW] });
 st1 === "locked" ? ok("escrow locked") : bad(`status is ${st1}, expected locked`);
 

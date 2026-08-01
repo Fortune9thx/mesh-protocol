@@ -318,6 +318,30 @@ export async function refundEscrow(escrowId: string) {
     : { ok: false, status: 500, data: null, error: result.error };
 }
 
+/**
+ * Permissionlessly records a settled escrow's outcome on ReputationLedger.
+ * The outcome isn't taken on the caller's word -- ReputationLedger derives it
+ * itself by reading EscrowVault's real settled state via view() calls, so
+ * this is safe to fire from any wallet after any settlement. Best-effort:
+ * callers should not block their own success state on this succeeding (e.g.
+ * someone else may have already reported it, which reverts harmlessly).
+ */
+export async function reportReputationFromEscrow(escrowId: string) {
+  const err = requireWallet();
+  if (err) return { ...err, status: 401, data: null };
+
+  const result = await writeContract(
+    _provider,
+    _address!,
+    "ReputationLedger",
+    "report_from_escrow",
+    [escrowId],
+  );
+  return result.ok
+    ? { ok: true, status: 200, data: { hash: result.hash } }
+    : { ok: false, status: 500, data: null, error: result.error };
+}
+
 // ── Legacy stubs (kept so components don't need changes) ──────────────────────
 
 export function getAgents() { return Promise.resolve(null); }

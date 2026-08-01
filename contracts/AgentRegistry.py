@@ -124,3 +124,7 @@ class AgentRegistry(gl.Contract):
     @gl.public.view
     def is_active(self, agent_id: str) -> bool:
         return self.status_map.get(agent_id, "") == "active"
+
+    @gl.public.view
+    def get_spending_limit(self, agent_id: str) -> u256:
+        return self.spending_limits.get(agent_id, u256(0))
